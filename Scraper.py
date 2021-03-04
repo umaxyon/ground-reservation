@@ -2,12 +2,14 @@ import asyncio
 from pyppeteer import launch
 from ReservationCalender import ReservationCalender
 from GrandInfo import GrandInfo
+from Dao import Dao
 
 OOTA = 1
 HAGINAKA = 3
 KAMATA = 4
 
 TARGET_GROUNDS = [OOTA, HAGINAKA, KAMATA]
+AREA_NAME = {OOTA: "太田スタジアム", HAGINAKA: "糀谷・羽田", KAMATA: "蒲田"}
 
 
 class Scraper:
@@ -71,33 +73,42 @@ class Scraper:
             await cal.describe_calender()
             await cal.click_day(cd)
 
-            info = GrandInfo(self.page)
+            info = GrandInfo(self.page, cd)
             await info.describe_grand_info()
             ret.append(info)
 
         return ret
 
+    @staticmethod
+    def save(infos):
+        params = []
+        for area, info_list in infos.items():
+            for info in info_list:
+                params.extend(info.to_insert_param(AREA_NAME[area]))
+        Dao().insert_exec(params)
+
     async def run(self):
         await self.get_init_page()
-        info_list = []
+        infos = {}
         for target in TARGET_GROUNDS:
             await self.move_baseball_reserve_top()
             await self.click_ground_area_button(target)
             await self.login()
 
+            infos[target] = []
             while True:
                 cal = ReservationCalender(self.page)
                 await cal.describe_calender()
 
                 month_info_list = await self.get_ground_info_list_in_month(cal)
-                info_list.extend(month_info_list)
+                infos[target].extend(month_info_list)
 
                 await cal.click_next_month()
                 if await cal.is_not_next_page():
                     await self.click_to_menu_button()
                     break
 
-        print(info_list)
+        self.save(infos)
 
 
 if __name__ == "__main__":

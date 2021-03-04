@@ -37,7 +37,6 @@ class ReservationCalender:
         self.page = page
         self.year = None
         self.month = None
-        # self.btn_cal_disp = None
         self.open_days = []
 
     async def get_calendar_frame(self):

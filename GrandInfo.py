@@ -12,8 +12,9 @@ ZEN_HAN_TRANS = str.maketrans({chr(0xFF01 + i): chr(0x21 + i) for i in range(94)
 
 
 class GrandInfo:
-    def __init__(self, page):
+    def __init__(self, page, calday):
         self.page = page
+        self.calday = calday
         self.time_tbl = normal_time_table
         self.open_grounds = {}
 
@@ -38,3 +39,13 @@ class GrandInfo:
                 self.open_grounds[name] = open_buf
 
         print(self.open_grounds)
+
+    def to_insert_param(self, area_nm):
+        ym = f"{self.calday.year}{self.calday.month:0>2}"
+        ret = []
+        for gname, time_list in self.open_grounds.items():
+            for tm in time_list:
+                timebox = self.time_tbl.index(tm)
+                dat = (ym, self.calday.day, self.calday.week_day, area_nm, gname, timebox)
+                ret.append(dat)
+        return ret
