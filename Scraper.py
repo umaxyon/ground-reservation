@@ -57,35 +57,47 @@ class Scraper:
         await login_btn.click()
         await self.page.waitForNavigation()
 
+    async def get_ground_info_list_in_month(self, cal):
+        ret = []
+        skip = True
+        for cd in cal.open_days:
+            if skip and cd.current:
+                skip = False
+
+            if skip:
+                continue
+
+            cal = ReservationCalender(self.page)
+            await cal.describe_calender()
+            await cal.click_day(cd)
+
+            info = GrandInfo(self.page)
+            await info.describe_grand_info()
+            ret.append(info)
+
+        return ret
+
     async def run(self):
         await self.get_init_page()
-
+        info_list = []
         for target in TARGET_GROUNDS:
             await self.move_baseball_reserve_top()
             await self.click_ground_area_button(target)
             await self.login()
 
-            cal = ReservationCalender(self.page)
-            await cal.describe_calender()
-
-            skip = True
-            for cd in cal.open_days:
-                if skip and cd.current:
-                    skip = False
-
-                if skip:
-                    continue
-
-                print(cd)
+            while True:
                 cal = ReservationCalender(self.page)
                 await cal.describe_calender()
-                await cal.click_day(cd)
 
-                info = GrandInfo(self.page)
-                await info.describe_grand_info()
+                month_info_list = await self.get_ground_info_list_in_month(cal)
+                info_list.extend(month_info_list)
 
-            print(cal.open_days)
-            await self.click_to_menu_button()
+                await cal.click_next_month()
+                if await cal.is_not_next_page():
+                    await self.click_to_menu_button()
+                    break
+
+        print(info_list)
 
 
 if __name__ == "__main__":

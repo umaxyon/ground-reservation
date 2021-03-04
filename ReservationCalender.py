@@ -31,14 +31,13 @@ class CalDay:
     def equal_day(self, other):
         return self.year == other.year and self.month == other.month and self.day == other.day
 
+
 class ReservationCalender:
     def __init__(self, page):
         self.page = page
         self.year = None
         self.month = None
         # self.btn_cal_disp = None
-        self.btn_prev = None
-        self.btn_next = None
         self.open_days = []
 
     async def get_calendar_frame(self):
@@ -73,13 +72,19 @@ class ReservationCalender:
         else:
             print(f'not in target. {cal_day}')
 
+    async def click_next_month(self):
+        cal_frame = await self.get_calendar_frame()
+        btns = await cal_frame[0].JJ('td.SETSUMEI + td > a')
+        await btns[1].click()
+        await self.page.waitForNavigation()
+
+    async def is_not_next_page(self):
+        err = await self.page.J('td.LBATR')
+        return err is not None
+
     async def describe_calender(self):
         cal_frame = await self.get_calendar_frame()
         await self.get_yyyy_mm(cal_frame)  # 年月
-
-        # 前月翌月ボタン
-        btns = await cal_frame[0].JJ('td.SETSUMEI + td > a')
-        self.btn_prev, self.btn_next = btns[0], btns[1]
 
         cal_td = await cal_frame[1].JJ('tbody > tr.WTBL > td.NATR')
         for i in range(1, len(cal_td)):
