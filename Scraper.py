@@ -1,3 +1,5 @@
+import os
+from distutils.util import strtobool
 import asyncio
 from pyppeteer import launch
 from ReservationCalender import ReservationCalender
@@ -14,7 +16,8 @@ AREA_NAME = {OOTA: "太田スタジアム", HAGINAKA: "糀谷・羽田", KAMATA:
 
 class Scraper:
     def __init__(self):
-        self.mode = {'headless': False, 'appMode': True, 'devtools': False}
+        headless = bool(strtobool(os.getenv('HEADLESS', default='True')))
+        self.mode = {'headless': headless, 'appMode': True, 'devtools': False}
         self.viewport = {'width': 1200, 'height': 1000}
         self.page = None
 
