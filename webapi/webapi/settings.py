@@ -9,7 +9,7 @@ https://docs.djangoproject.com/en/3.1/topics/settings/
 For the full list of settings and their values, see
 https://docs.djangoproject.com/en/3.1/ref/settings/
 """
-
+import os
 from pathlib import Path
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -74,12 +74,15 @@ WSGI_APPLICATION = 'webapi.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/3.1/ref/settings/#databases
 
+db_user = os.environ['DB_USER']
+db_pass = os.environ['DB_PASS']
+
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
         'NAME': 'ground_reservation',
-        'USER': '',
-        'PASSWORD': '',
+        'USER': db_user,
+        'PASSWORD': db_pass,
         'HOST': 'localhost',
         'PORT': '3306'
     }
