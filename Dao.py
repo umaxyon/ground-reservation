@@ -7,8 +7,8 @@ class Dao:
         self.conf = {
             "user": os.environ['DB_USER'],
             "passwd": os.environ['DB_PASS'],
-            "host": "localhost",
-            "port": 33306,
+            "host": os.environ['DB_HOST'],
+            "port": int(os.environ['DB_PORT']),
             "db": "ground_reservation",
             "charset": "utf8mb4"
         }
