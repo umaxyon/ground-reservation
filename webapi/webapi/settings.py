@@ -76,6 +76,8 @@ WSGI_APPLICATION = 'webapi.wsgi.application'
 
 db_user = os.environ['DB_USER']
 db_pass = os.environ['DB_PASS']
+db_host = os.environ['DB_HOST']
+db_port = os.environ['DB_PORT']
 
 DATABASES = {
     'default': {
@@ -83,8 +85,8 @@ DATABASES = {
         'NAME': 'ground_reservation',
         'USER': db_user,
         'PASSWORD': db_pass,
-        'HOST': 'localhost',
-        'PORT': '33306',
+        'HOST': db_host,
+        'PORT': db_port,
         'OPTIONS': {
             'charset': 'utf8mb4'
         }
