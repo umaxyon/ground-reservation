@@ -8,6 +8,7 @@ class Dao:
             "user": os.environ['DB_USER'],
             "passwd": os.environ['DB_PASS'],
             "host": "localhost",
+            "port": 33306,
             "db": "ground_reservation",
             "charset": "utf8mb4"
         }
@@ -16,7 +17,10 @@ class Dao:
         conn = MySQLdb.connect(**self.conf)
         cur = conn.cursor()
         try:
-            cur.executemany("insert into ground_info values(%s, %s, %s, %s, %s, %s)", params)
+            cur.executemany((
+                "insert into ground_view_groundinfo(ym, dt, week_day, area, gname, timebox) "
+                "values(%s, %s, %s, %s, %s, %s)"
+            ), params)
             conn.commit()
         except Exception as e:
             conn.rollback()

@@ -1,1 +1,4 @@
-ローカルテスト用Mysqlのdocker-compose
+Mysql用のdocker-compose
+
+サーバーにMysqlはインストールされているが、databaseのデフォルト文字コードがlaten1で作成されており、
+Djangoのmigrateでlaten1のテーブルが出来てしまうのでdockerで当アプリ専用のMysqlを上げることにした。
