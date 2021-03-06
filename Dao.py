@@ -13,10 +13,11 @@ class Dao:
             "charset": "utf8mb4"
         }
 
-    def insert_exec(self, params):
+    def recreate_groundinfo(self, params):
         conn = MySQLdb.connect(**self.conf)
         cur = conn.cursor()
         try:
+            cur.execute("delete from ground_view_groundinfo")
             cur.executemany((
                 "insert into ground_view_groundinfo(ym, dt, week_day, area, gname, timebox) "
                 "values(%s, %s, %s, %s, %s, %s)"
