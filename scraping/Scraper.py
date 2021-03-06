@@ -15,7 +15,8 @@ AREA_NAME = {OOTA: "太田スタジアム", HAGINAKA: "糀谷・羽田", KAMATA:
 
 
 class Scraper:
-    def __init__(self):
+    def __init__(self, log):
+        self.log = log
         headless = bool(strtobool(os.getenv('HEADLESS', default='True')))
         no_sand = bool(strtobool(os.getenv('NO_SANDBOX', default='True')))
         arg_no_sand = "--no-sandbox" if no_sand else ""
@@ -34,7 +35,7 @@ class Scraper:
                 await page.waitForNavigation()
                 self.page = page
             except Exception as e:
-                print(e)
+                self.log.error(e)
                 await self.browser.close()
 
         await __access()
@@ -82,11 +83,11 @@ class Scraper:
             if skip:
                 continue
 
-            cal = ReservationCalender(self.page)
+            cal = ReservationCalender(self.page, self.log)
             await cal.describe_calender()
             await cal.click_day(cd)
 
-            info = GrandInfo(self.page, cd)
+            info = GrandInfo(self.page, cd, self.log)
             await info.describe_grand_info()
             ret.append(info)
 
@@ -104,6 +105,7 @@ class Scraper:
         await self.get_init_page()
         infos = {}
         for target in TARGET_GROUNDS:
+            self.log.debug(AREA_NAME[target])
             await self.move_baseball_reserve_top()
             await self.click_ground_area_button(target)
             await self.login()

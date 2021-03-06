@@ -12,7 +12,8 @@ ZEN_HAN_TRANS = str.maketrans({chr(0xFF01 + i): chr(0x21 + i) for i in range(94)
 
 
 class GrandInfo:
-    def __init__(self, page, calday):
+    def __init__(self, page, calday, log):
+        self.log = log
         self.page = page
         self.calday = calday
         self.time_tbl = normal_time_table
@@ -38,7 +39,7 @@ class GrandInfo:
             if len(open_buf) > 0:
                 self.open_grounds[name] = open_buf
 
-        # print(self.open_grounds)
+        self.log.debug(self.open_grounds)
 
     def to_insert_param(self, area_nm):
         ym = f"{self.calday.year}{self.calday.month:0>2}"

@@ -33,7 +33,8 @@ class CalDay:
 
 
 class ReservationCalender:
-    def __init__(self, page):
+    def __init__(self, page, log):
+        self.log = log
         self.page = page
         self.year = None
         self.month = None
@@ -69,7 +70,7 @@ class ReservationCalender:
             await target.td.click()
             await self.page.waitForNavigation()
         else:
-            print(f'not in target. {cal_day}')
+            self.log.warn(f'not in target. {cal_day}')
 
     async def click_next_month(self):
         cal_frame = await self.get_calendar_frame()
