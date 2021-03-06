@@ -1,17 +1,18 @@
 import os
 from distutils.util import strtobool
-import asyncio
 from pyppeteer import launch
 from ReservationCalender import ReservationCalender
 from GrandInfo import GrandInfo
 from Dao import Dao
 
+OOMORI = 0
 OOTA = 1
+CHOFU = 2
 HAGINAKA = 3
 KAMATA = 4
 
-TARGET_GROUNDS = [OOTA, HAGINAKA, KAMATA]
-AREA_NAME = {OOTA: "太田スタジアム", HAGINAKA: "糀谷・羽田", KAMATA: "蒲田"}
+TARGET_GROUNDS = [OOMORI, OOTA, CHOFU, HAGINAKA, KAMATA]
+AREA_NAME = {OOMORI: "大森", OOTA: "太田スタジアム", CHOFU: "調布", HAGINAKA: "糀谷・羽田", KAMATA: "蒲田"}
 
 
 class Scraper:
@@ -112,7 +113,7 @@ class Scraper:
 
             infos[target] = []
             while True:
-                cal = ReservationCalender(self.page)
+                cal = ReservationCalender(self.page, self.log)
                 await cal.describe_calender()
 
                 month_info_list = await self.get_ground_info_list_in_month(cal)
@@ -126,6 +127,3 @@ class Scraper:
         self.save(infos)
         await self.browser.close()
 
-
-if __name__ == "__main__":
-    asyncio.get_event_loop().run_until_complete(Scraper().run())

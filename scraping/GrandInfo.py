@@ -1,4 +1,7 @@
 name_map = {
+    '昭和島運動場野球場': '昭和島運動場',
+    '平和島公園野球場': '平和島公園',
+    '東調布公園': '東調布公園',
     '多摩川緑地野球場': '多摩川緑地',
     '多摩川六郷橋緑地野球場': '六郷橋緑地',
     '多摩川ガス橋緑地野球場': 'ガス橋緑地',
@@ -24,7 +27,10 @@ class GrandInfo:
         ground_name = [v.strip() for v in title.split('<br>')][1]
         buf = ground_name.split('_')
         name = name_map[buf[0]] if buf[0] in name_map else buf[0]
-        return f'{name}_{buf[1].translate(ZEN_HAN_TRANS)}'
+        if len(buf) == 2:
+            return f'{name}_{buf[1].translate(ZEN_HAN_TRANS)}'
+        else:
+            return name
 
     async def describe_grand_info(self):
         trs = await self.page.JJ('div > table.STTL > tbody > tr:last-child')
@@ -32,7 +38,7 @@ class GrandInfo:
             tds = await tr.JJ('td')
             name = await self.get_name(tds[0])
             open_buf = []
-            for i in range(4):
+            for i in range(len(tds) - 2):
                 btn = await tds[i + 2].J('input[type=button]')
                 if btn is not None:
                     open_buf.append(self.time_tbl[i])
