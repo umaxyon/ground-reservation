@@ -17,17 +17,27 @@ AREA_NAME = {OOTA: "太田スタジアム", HAGINAKA: "糀谷・羽田", KAMATA:
 class Scraper:
     def __init__(self):
         headless = bool(strtobool(os.getenv('HEADLESS', default='True')))
-        self.mode = {'headless': headless, 'appMode': True, 'devtools': False}
+        no_sand = bool(strtobool(os.getenv('NO_SANDBOX', default='True')))
+        arg_no_sand = "--no-sandbox" if no_sand else ""
+        self.mode = {'headless': headless, 'appMode': True, 'devtools': False, 'options': {'args': [arg_no_sand]}}
         self.viewport = {'width': 1200, 'height': 1000}
+        self.browser = None
         self.page = None
 
     async def get_init_page(self):
-        browser = await launch(**self.mode)
-        page = await browser.newPage()
-        await page.setViewport(self.viewport)
-        await page.goto('http://www.yoyaku.city.ota.tokyo.jp/')
-        await page.waitForNavigation()
-        self.page = page
+        async def __access():
+            try:
+                self.browser = await launch(**self.mode)
+                page = await self.browser.newPage()
+                await page.setViewport(self.viewport)
+                await page.goto('http://www.yoyaku.city.ota.tokyo.jp/')
+                await page.waitForNavigation()
+                self.page = page
+            except Exception as e:
+                print(e)
+                await self.browser.close()
+
+        await __access()
 
     async def move_baseball_reserve_top(self):
         css_selector = (
@@ -112,6 +122,7 @@ class Scraper:
                     break
 
         self.save(infos)
+        await self.browser.close()
 
 
 if __name__ == "__main__":
