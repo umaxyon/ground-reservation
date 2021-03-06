@@ -38,7 +38,7 @@ class GrandInfo:
             if len(open_buf) > 0:
                 self.open_grounds[name] = open_buf
 
-        print(self.open_grounds)
+        # print(self.open_grounds)
 
     def to_insert_param(self, area_nm):
         ym = f"{self.calday.year}{self.calday.month:0>2}"
