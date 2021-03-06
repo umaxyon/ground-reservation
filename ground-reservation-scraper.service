@@ -1,0 +1,10 @@
+[Unit]
+Description = ground-reservation scraper daemon.
+
+[Service]
+ExecStart = /home/ubuntu/ground-reservation/batch_start.sh
+Restart = always
+Type = simple
+
+[Install]
+WantedBy = multi-user.target
