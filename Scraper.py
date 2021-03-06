@@ -88,7 +88,7 @@ class Scraper:
         for area, info_list in infos.items():
             for info in info_list:
                 params.extend(info.to_insert_param(AREA_NAME[area]))
-        Dao().insert_exec(params)
+        Dao().recreate_groundinfo(params)
 
     async def run(self):
         await self.get_init_page()
