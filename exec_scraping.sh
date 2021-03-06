@@ -7,4 +7,4 @@ source venv/bin/activate
 export DB_USER=
 export DB_PASS=
 
-python Scraper.py
+python scraping/Scraper.py
