@@ -7,6 +7,7 @@ import logging
 from logging import StreamHandler
 from logging.handlers import RotatingFileHandler
 from Scraper import Scraper
+from Dao import Dao
 
 
 def now():
@@ -32,21 +33,28 @@ def init_logger():
 log = init_logger()
 
 
-def run_scraper():
+def run_scraper(debug):
+    log_level = logging.DEBUG if debug else logging.INFO
+    log.setLevel(log_level)
     asyncio.get_event_loop().run_until_complete(Scraper(log).run())
 
 
 def schedule(interval, wait=True):
+    dao = Dao()
     start_tm = time.time()
     while True:
-        p = multiprocessing.Process(target=run_scraper)
-        log.info(f"start.")
-        p.start()
-        if wait:
-            p.join()
-        next_tm = ((start_tm - time.time()) % interval) or interval
-        log.info(f"end. next_tm={next_tm} (after second)")
-        time.sleep(next_tm)
+        sys_con = dao.get_system_condition()
+        if sys_con['available']:
+            p = multiprocessing.Process(target=run_scraper, args=(sys_con['debug'],))
+            log.info(f"start.")
+            p.start()
+            if wait:
+                p.join()
+            next_tm = ((start_tm - time.time()) % interval) or interval
+            log.info(f"end. next_tm={next_tm} (after second)")
+            time.sleep(next_tm)
+        else:
+            log.info('system not available. exit.')
 
 
 if __name__ == "__main__":

@@ -40,7 +40,8 @@ class Dao:
     @transaction
     def get_system_condition(self):
         self.cur.execute('select * from ground_view_systemcondition WHERE id = %s', [1])
-        return self.cur.fetchone()
+        dat = self.cur.fetchone()
+        return {'available': dat[1] == 1, 'debug': dat[2] == 1, 'last_update': dat[3]}
 
     @transaction
     def recreate_groundinfo(self, params):
