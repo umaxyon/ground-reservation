@@ -3,3 +3,4 @@ __pycache__
 .idea
 db/mysql/data/*
 scraping/scraper.log
+webapi/migrate.sh
