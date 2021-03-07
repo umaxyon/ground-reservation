@@ -1,6 +1,11 @@
+import datetime
 import os
 import MySQLdb
 from sqlalchemy.pool import QueuePool
+
+
+def jst_now():
+    return datetime.datetime.utcnow() + datetime.timedelta(hours=9)
 
 
 def transaction(f):
@@ -45,6 +50,8 @@ class Dao:
 
     @transaction
     def recreate_groundinfo(self, params):
+        now = jst_now().strftime("%Y/%m/%d_%H:%M:%S")
+        self.cur.execute("update ground_view_systemcondition set last_update = %s where id = %s", [now, 1])
         self.cur.execute("delete from ground_view_groundinfo")
         self.cur.executemany((
             "insert into ground_view_groundinfo(ym, dt, week_day, area, gname, timebox) "
