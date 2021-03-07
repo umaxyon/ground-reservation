@@ -1,7 +1,14 @@
-import * as React from 'react'
+import * as React from 'react';
 import * as ReactDOM from 'react-dom';
+import { RecoilRoot } from 'recoil';
+import App from './App';
+
 
 ReactDOM.render(
-    <h1>Hello World</h1>
+    <RecoilRoot>
+        <React.Suspense fallback={<div>loading...</div>}>
+            <App />
+        </React.Suspense>
+    </RecoilRoot>
     , document.getElementById('root') as HTMLElement
 );
