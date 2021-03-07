@@ -4,3 +4,4 @@ __pycache__
 db/mysql/data/*
 scraping/scraper.log
 webapi/migrate.sh
+scraper.log
