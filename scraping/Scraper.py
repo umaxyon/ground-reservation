@@ -37,6 +37,7 @@ class Scraper:
                 self.page = page
             except Exception as e:
                 self.log.error(e)
+                self.log.error(type(e))
                 await self.browser.close()
 
         await __access()
