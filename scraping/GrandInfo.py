@@ -8,6 +8,10 @@ name_map = {
     '多摩川大師橋緑地野球場': '大師橋緑地'
 }
 
+unsupported = {
+    'ガス橋緑地_5': 'selectboxに軟式野球が無い'
+}
+
 normal_time_table = ['07-09', '09-11', '11-13', '13-15', '15-17']
 summer_time_table = ['08-10', '10-12', '12-14', '14-16', '16-18']
 
@@ -15,10 +19,10 @@ ZEN_HAN_TRANS = str.maketrans({chr(0xFF01 + i): chr(0x21 + i) for i in range(94)
 
 
 class GrandInfo:
-    def __init__(self, page, calday, log):
-        self.log = log
-        self.page = page
-        self.calday = calday
+    def __init__(self, scraper):
+        self.scraper = scraper
+        self.log = scraper.log
+        self.page = scraper.page
         self.time_tbl = normal_time_table
         self.open_grounds = {}
 
@@ -28,31 +32,80 @@ class GrandInfo:
         buf = ground_name.split('_')
         name = name_map[buf[0]] if buf[0] in name_map else buf[0]
         if len(buf) == 2:
-            return f'{name}_{buf[1].translate(ZEN_HAN_TRANS)}'
+            return name, buf[1].translate(ZEN_HAN_TRANS).replace('号面', '')
         else:
-            return name
+            return name, ''
 
-    async def describe_grand_info(self):
-        trs = await self.page.JJ('div > table.STTL > tbody > tr:last-child')
-        for tr in trs:
-            tds = await tr.JJ('td')
-            name = await self.get_name(tds[0])
-            open_buf = []
+    async def get_trs(self):
+        return await self.page.JJ('div > table.STTL > tbody > tr:last-child')
+
+    async def get_tds(self, tr_row_num):
+        trs = await self.get_trs()
+        return await trs[tr_row_num].JJ('td')
+
+    def check_unsupported_target(self, target, gno):
+        return f'{target.gname}_{gno}' in unsupported.keys()
+
+    async def click_abailable_target_btn(self, target):
+        trs = await self.get_trs()
+        click_cnt = 0
+
+        for row, tr in enumerate(trs):
+            tds = await self.get_tds(row)
+            name, gno = await self.get_name(tds[0])
+
+            if self.check_unsupported_target(target, gno) or target.gname != name or not target.is_target_gno(gno):
+                continue
+
             for i in range(len(tds) - 2):
-                btn = await tds[i + 2].J('input[type=button]')
-                if btn is not None:
-                    open_buf.append(self.time_tbl[i])
-            if len(open_buf) > 0:
-                self.open_grounds[name] = open_buf
+                if target.timebox == i:
+                    tds = await self.get_tds(row)
+                    btn = await tds[i + 2].J('input[type=button]')
+                    if btn is not None:
+                        await btn.click()
+                        await self.scraper.page.waitForNavigation()
+                        click_cnt += 1
+        return click_cnt
 
-        self.log.debug(self.open_grounds)
+    async def click_reservation_next_button(self):
+        reservation_next_btn = await self.page.J('form > div > table:last-child a')
+        await reservation_next_btn.click()
+        await self.page.waitForNavigation()
 
-    def to_insert_param(self, area_nm):
-        ym = f"{self.calday.year}{self.calday.month:0>2}"
-        ret = []
-        for gname, time_list in self.open_grounds.items():
-            for tm in time_list:
-                timebox = self.time_tbl.index(tm)
-                dat = (ym, self.calday.day, self.calday.week_day, area_nm, gname, timebox)
-                ret.append(dat)
-        return ret
+    async def click_reservation_back_button(self):
+        back_btn = await self.page.J('form > div > table:last-child a:first-child')
+        await back_btn.click()
+        await self.page.waitForNavigation()
+
+    async def click_submit_reservation(self):
+        sub_btn = await self.page.J('form > div > table:last-child a:last-child')
+        await sub_btn.click()
+        await self.page.waitForNavigation()
+
+    async def click_continue_application(self):
+        css = (
+            'form > div > table > tbody > tr > td > table:last-of-type > '
+            'tbody > tr:last-child a:first-child'
+        )
+        continue_btn = await self.page.J(css)
+        await continue_btn.click()
+        await self.page.waitForNavigation()
+
+    async def get_reservation_no(self):
+        css = (
+            'form > div > table > tbody > tr > td > table:first-of-type > '
+            'tbody > tr:nth-child(3) > td b'
+        )
+        item = await self.page.J(css)
+        return await (await item.getProperty('textContent')).jsonValue()
+
+    async def select_mokuteki(self):
+        mokuteki_select = await self.page.JJ('form > div > table.STTL > tbody > tr.WTBL select')
+        if mokuteki_select is None:
+            return False  # 時間外
+
+        for num, sel in enumerate(mokuteki_select):
+            # TODO 軟式野球が無い場合、エラーログ出力
+            await self.page.select(f'select[name=LST_RIYOUMOKUTEKI_{num + 1}', '60')
+
+        return True

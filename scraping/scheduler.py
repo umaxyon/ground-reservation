@@ -6,7 +6,7 @@ from pathlib import Path
 import logging
 from logging import StreamHandler
 from logging.handlers import RotatingFileHandler
-from Scraper import Scraper
+from Reserver import Reserver
 from Dao import Dao
 
 
@@ -31,21 +31,21 @@ def init_logger():
 
 
 log = init_logger()
+dao = Dao()
 
 
-def run_scraper(debug):
+def run_reserver(debug):
     log_level = logging.DEBUG if debug else logging.INFO
     log.setLevel(log_level)
-    asyncio.get_event_loop().run_until_complete(Scraper(log).run())
+    asyncio.get_event_loop().run_until_complete(Reserver(log, dao).run())
 
 
 def schedule(interval, wait=True):
-    dao = Dao()
     start_tm = time.time()
     while True:
         sys_con = dao.get_system_condition()
         if sys_con['available']:
-            p = multiprocessing.Process(target=run_scraper, args=(sys_con['debug'],))
+            p = multiprocessing.Process(target=run_reserver, args=(sys_con['debug'],))
             log.info(f"start.")
             p.start()
             if wait:

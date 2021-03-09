@@ -2,6 +2,7 @@ import datetime
 import os
 import MySQLdb
 from sqlalchemy.pool import QueuePool
+from Model import Plan, Target
 
 
 def jst_now():
@@ -38,7 +39,7 @@ class Dao:
             "db": "ground_reservation",
             "charset": "utf8mb4"
         }
-        self.pool = QueuePool(lambda :MySQLdb.connect(**self.conf), pool_size=3)
+        self.pool = QueuePool(lambda: MySQLdb.connect(**self.conf), pool_size=3)
         self.conn = None
         self.cur = None
 
@@ -57,4 +58,17 @@ class Dao:
             "insert into ground_view_groundinfo(ym, dt, week_day, area, gname, timebox) "
             "values(%s, %s, %s, %s, %s, %s)"
         ), params)
+
+    @transaction
+    def get_available_plans(self, target_status=('監視中',)):
+        self.cur.execute('select * from ground_view_reservationplan WHERE status = %s', list(target_status))
+        data = self.cur.fetchall()
+        return [Plan(self, d) for d in data]
+
+    @transaction
+    def get_targets_from_plan_id(self, plan_id):
+        self.cur.execute('select * from ground_view_reservationtarget WHERE plan_id = %s', [plan_id])
+        data = self.cur.fetchall()
+        return [Target(self, d) for d in data]
+
 

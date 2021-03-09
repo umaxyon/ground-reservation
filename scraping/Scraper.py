@@ -5,6 +5,7 @@ from ReservationCalender import ReservationCalender
 from GrandInfo import GrandInfo
 from Dao import Dao
 
+
 OOMORI = 0
 OOTA = 1
 CHOFU = 2
@@ -16,7 +17,7 @@ AREA_NAME = {OOMORI: "大森", OOTA: "太田スタジアム", CHOFU: "調布", H
 
 
 class Scraper:
-    def __init__(self, log):
+    def __init__(self, log, dao):
         self.log = log
         headless = bool(strtobool(os.getenv('HEADLESS', default='True')))
         no_sand = bool(strtobool(os.getenv('NO_SANDBOX', default='True')))
@@ -25,6 +26,7 @@ class Scraper:
         self.viewport = {'width': 1200, 'height': 1000}
         self.browser = None
         self.page = None
+        self.dao = dao
 
     async def get_init_page(self):
         async def __access():
@@ -69,8 +71,8 @@ class Scraper:
         await btn.click()
         await self.page.waitForNavigation()
         await self.page.waitForSelector('input[name=PWD] + div > a')
-        await self.page.type('input[name=ID]', "00124574")
-        await self.page.type('input[name=PWD]', "123456")
+        await self.page.type('input[name=ID]', os.environ['SYS_ID'])
+        await self.page.type('input[name=PWD]', os.environ['SYS_PASS'])
         login_btn = await self.page.J('input[name=PWD] + div > a')
         await login_btn.click()
         await self.page.waitForNavigation()
@@ -85,7 +87,7 @@ class Scraper:
             if skip:
                 continue
 
-            cal = ReservationCalender(self.page, self.log)
+            cal = ReservationCalender(self)
             await cal.describe_calender()
             await cal.click_day(cd)
 
@@ -95,17 +97,17 @@ class Scraper:
 
         return ret
 
-    @staticmethod
-    def save(infos):
+    def save(self, infos):
         params = []
         for area, info_list in infos.items():
             for info in info_list:
                 params.extend(info.to_insert_param(AREA_NAME[area]))
-        Dao().recreate_groundinfo(params)
+        self.dao.recreate_groundinfo(params)
 
     async def run(self):
         await self.get_init_page()
         infos = {}
+
         for target in TARGET_GROUNDS:
             self.log.debug(AREA_NAME[target])
             await self.move_baseball_reserve_top()
@@ -114,7 +116,7 @@ class Scraper:
 
             infos[target] = []
             while True:
-                cal = ReservationCalender(self.page, self.log)
+                cal = ReservationCalender(self)
                 await cal.describe_calender()
 
                 month_info_list = await self.get_ground_info_list_in_month(cal)

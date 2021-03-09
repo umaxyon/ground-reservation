@@ -1,5 +1,6 @@
 import re
-import datetime as dt
+from Dao import Target
+from Model import CalDay
 
 
 async def get_style(page, elm):
@@ -15,27 +16,10 @@ def get_ym(ym):
     return m.group(1), m.group(2)
 
 
-class CalDay:
-    def __init__(self, year, month, day, is_current_day, td):
-        self.year = year
-        self.month = month
-        self.day = day
-        w = dt.datetime(int(year), int(month), int(day)).weekday()
-        self.week_day = ['月', '火', '水', '木', '金', '土', '日'][w]
-        self.current = is_current_day
-        self.td = td
-
-    def __repr__(self):
-        return f'{self.year}/{self.month:0>2}/{self.day:0>2}({self.week_day})'
-
-    def equal_day(self, other):
-        return self.year == other.year and self.month == other.month and self.day == other.day
-
-
 class ReservationCalender:
-    def __init__(self, page, log):
-        self.log = log
-        self.page = page
+    def __init__(self, scraper):
+        self.log = scraper.log
+        self.page = scraper.page
         self.year = None
         self.month = None
         self.open_days = []
@@ -60,8 +44,13 @@ class ReservationCalender:
                 tds.append((day, td, is_current_day))
         return tds
 
+    async def get_match_days(self, t: Target):
+        await self.describe_calender()
+        return [d for d in self.open_days if d.equal_day(t.calday)]
+
     async def click_day(self, cal_day):
         target = None
+        await self.describe_calender()
         for cd in self.open_days:
             if cd.equal_day(cal_day):
                 target = cd
@@ -83,6 +72,7 @@ class ReservationCalender:
         return err is not None
 
     async def describe_calender(self):
+        self.open_days = []
         cal_frame = await self.get_calendar_frame()
         await self.get_yyyy_mm(cal_frame)  # 年月
 
@@ -101,4 +91,4 @@ class ReservationCalender:
                 continue  # 空きなし
 
             day = await self.page.evaluate('elm => elm.textContent', td)
-            self.open_days.append(CalDay(self.year, self.month, day.strip(), is_current_day, td))
+            self.open_days.append(CalDay(int(self.year), int(self.month), int(day.strip()), is_current_day, td))
