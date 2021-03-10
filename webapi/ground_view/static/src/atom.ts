@@ -1,4 +1,4 @@
-import Axios from 'axios';
+import ajax from './utils';
 import { atom, selector } from 'recoil';
 
 export const systemCondition = atom({
@@ -7,8 +7,13 @@ export const systemCondition = atom({
 });
 
 export const systemConditionAjax = selector({
-    key: 'systemCondition',
+    key: 'systemConditionAjax',
     get: async ({get}) => {
-        return await Axios.get("/ground_view/get_system_condition/").then(resp => resp.data);
+        return await ajax({ url: "/ground_view/get_system_condition/"}).then((resp: any) => resp);
     }
 });
+
+export const windowHeightResize = atom({
+    key: 'windowHeightResize',
+    default: window.innerHeight
+})

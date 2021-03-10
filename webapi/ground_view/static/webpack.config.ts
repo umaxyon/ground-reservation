@@ -1,11 +1,12 @@
 import * as path from 'path';
-import { Configuration } from 'webpack';
+import { Configuration, ProvidePlugin } from 'webpack';
 
 const IS_DEVELOP = true;
 
 const config: Configuration = {
     mode: IS_DEVELOP ? 'development': 'production',
     context: path.join(__dirname, 'src'),
+    devtool: 'inline-source-map',
     entry: './index.tsx',
     output: {
         path: path.join(__dirname, 'dist'),
@@ -35,8 +36,19 @@ const config: Configuration = {
         ],
     },
     resolve: {
+        alias: {
+            path: require.resolve("path-browserify")
+        },
         extensions: ['.ts', '.tsx', '.js', '.jsx'],
-    }
+        fallback: {
+            "fs": false
+        }
+    },
+    plugins: [
+        new ProvidePlugin({
+            Buffer: ['buffer', 'Buffer'],
+        })
+    ]
 }
 
 export default config;

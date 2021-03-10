@@ -1,8 +1,10 @@
+import sourceMapSupport from 'source-map-support';
 import * as React from 'react';
 import * as ReactDOM from 'react-dom';
 import { RecoilRoot } from 'recoil';
 import App from './App';
 
+sourceMapSupport.install();
 
 ReactDOM.render(
     <RecoilRoot>
