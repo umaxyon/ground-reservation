@@ -1,12 +1,16 @@
-import * as path from 'path';
-import { Configuration, ProvidePlugin } from 'webpack';
+const webpack = require('webpack');
+const path = require('path');
+
 
 const IS_DEVELOP = true;
 
-const config: Configuration = {
+const config = {
     mode: IS_DEVELOP ? 'development': 'production',
     context: path.join(__dirname, 'src'),
     devtool: 'inline-source-map',
+    devServer: {
+        historyApiFallback: true
+    },
     entry: './index.tsx',
     output: {
         path: path.join(__dirname, 'dist'),
@@ -45,10 +49,12 @@ const config: Configuration = {
         }
     },
     plugins: [
-        new ProvidePlugin({
+        new webpack.ProvidePlugin({
             Buffer: ['buffer', 'Buffer'],
         })
     ]
 }
 
-export default config;
+module.exports = [
+    config
+];
