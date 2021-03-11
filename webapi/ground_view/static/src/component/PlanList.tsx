@@ -1,40 +1,18 @@
 import React, { useEffect } from 'react';
-import { atom, selector, useRecoilValue, useSetRecoilState, useRecoilState } from 'recoil';
-import ajax, { isEmpty } from '../utils';
+import { useAppDispatch, useAppSelector } from '../hooks';
+import { fetchPlanList } from '../modules/PlanListSlice';
+import { isEmpty } from '../utils';
+import PlanRow, { Plan } from './PlanRow';
 
-
-export const planList = atom({
-    key: 'planList',
-    default: {}
-})
-
-export const planListAjax = selector({
-    key: 'planListAjax',
-    get: async ({get}) => {
-        return await ajax({ url: "/ground_view/get_plans/"}).then((resp: any) => resp);
-        
-    },
-    set: ({set}, newData: any) => {
-        set(planList, newData);
-    }
-})
-
-export type PlanType = {
-    status: string,
-    ymd_range: string,
-    area_csv: string
-}
-export type PlanListType = {[key: string] : [PlanType]};
 
 const PlanList: React.FC<any> = () => {
-    const [ajaxPlans,setPlans] = useRecoilState(planListAjax);
-    const plans: PlanListType = useRecoilValue(planList);
+    const dispatch = useAppDispatch();
 
     useEffect(() => {
-        setPlans(ajaxPlans);
-    });
+        dispatch(fetchPlanList())
+    }, [dispatch]);
 
-    // const plans = props.list;
+    const plans = useAppSelector(state => state.PlanListSlice.plans)
 
     let ret;
     if (isEmpty(plans)) {
@@ -43,7 +21,7 @@ const PlanList: React.FC<any> = () => {
         const watchList = plans.監視中
         ret = []
         for (const k in watchList) {
-            ret.push(<div key={`plan_${k}`}>{watchList[k].ymd_range}</div>)
+            ret.push(<PlanRow key={`plan_${k}`} row={k} data={new Plan(watchList[k])} />)
         }
     }
 
