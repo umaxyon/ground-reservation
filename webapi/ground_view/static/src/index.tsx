@@ -1,16 +1,19 @@
 import sourceMapSupport from 'source-map-support';
-import * as React from 'react';
-import * as ReactDOM from 'react-dom';
-import { RecoilRoot } from 'recoil';
+import React from 'react';
+import ReactDOM from 'react-dom';
 import App from './App';
+import store from './store';
+import { Provider } from 'react-redux';
+import { RecoilRoot } from 'recoil'
+
 
 sourceMapSupport.install();
 
 ReactDOM.render(
     <RecoilRoot>
-        <React.Suspense fallback={<div>loading...</div>}>
+        <Provider store={store}>
             <App />
-        </React.Suspense>
+        </Provider>
     </RecoilRoot>
     , document.getElementById('root') as HTMLElement
 );
