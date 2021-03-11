@@ -47,4 +47,9 @@ export function isEmpty(obj: {}) {
   return !Object.keys(obj).length;
 }
 
+export function formatYmd(strYmd: string) {
+  const m = /(\d{4})(\d{2})(\d{2})/.exec(strYmd)
+  return `${m![1]}年${m![2]}月${m![3]}日`
+}
+
 export default ajax;
