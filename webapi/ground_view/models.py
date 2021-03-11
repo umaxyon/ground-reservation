@@ -27,6 +27,8 @@ class ReservationPlan(models.Model):
     status = models.CharField('状態', max_length=10)
     ymd_range = models.CharField('年月日範囲', max_length=17, default='')
     area_csv = models.CharField('地域', max_length=80, default='')
+    target_cnt = models.IntegerField('ターゲット数', validators=[MaxLengthValidator(3)], default=0)
+    reserved_cnt = models.IntegerField('予約済み数', validators=[MaxLengthValidator(3)], default=0)
 
 
 class ReservationTarget(models.Model):

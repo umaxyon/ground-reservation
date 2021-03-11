@@ -57,6 +57,8 @@ class Plan(ReservationModel):
         self.status = dat[1]
         self.area_csv = dat[2]
         self.ymd_range = dat[3]
+        self.targets_cnt = dat[4]
+        self.reserved_cnt = dat[5]
         self.targets = []
 
     def get_targets(self, force=False):
