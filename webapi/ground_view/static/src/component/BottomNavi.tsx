@@ -3,6 +3,8 @@ import { selector } from 'recoil';
 import { BottomNavigation, BottomNavigationAction }from '@material-ui/core';
 import SportsBaseballOutlinedIcon from '@material-ui/icons/SportsBaseballOutlined';
 import SettingsApplicationsOutlinedIcon from '@material-ui/icons/SettingsApplicationsOutlined';
+import AddCircleOutlineIcon from '@material-ui/icons/AddCircleOutline';
+import { useHistory } from 'react-router-dom';
 
 export const bottomNaviHeight = selector({
     key: 'botomNaviHeight',
@@ -19,11 +21,22 @@ const BottomNavi: React.FC<any> = () => {
     const handleChange = (e: React.ChangeEvent<{}>, newVal: string) => {
         setValue(newVal);
     }
-
+    const { push } = useHistory();
     return (
         <BottomNavigation value={value} onChange={handleChange}>
-            <BottomNavigationAction label="プラン一覧" value="pList" icon={<SportsBaseballOutlinedIcon />} />
-            <BottomNavigationAction label="設定" value="settings" icon={<SettingsApplicationsOutlinedIcon />} />
+            <BottomNavigationAction
+                label="プラン一覧"
+                value="pList"
+                icon={<SportsBaseballOutlinedIcon />}
+                onClick={() => push('/dist/')}/>
+            <BottomNavigationAction
+                label="プラン追加" 
+                value="add_plan" icon={<AddCircleOutlineIcon />} 
+                onClick={() => push('/dist/add_plan')} />
+            <BottomNavigationAction
+                label="設定" 
+                value="settings" icon={<SettingsApplicationsOutlinedIcon />} 
+                onClick={() => push('/dist/settings')} />
         </BottomNavigation>
     )
 }
