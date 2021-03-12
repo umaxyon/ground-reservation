@@ -41,7 +41,8 @@ const config = {
     },
     resolve: {
         alias: {
-            path: require.resolve("path-browserify")
+            path: require.resolve("path-browserify"),
+            process: "process/browser"
         },
         extensions: ['.ts', '.tsx', '.js', '.jsx'],
         fallback: {
@@ -51,6 +52,9 @@ const config = {
     plugins: [
         new webpack.ProvidePlugin({
             Buffer: ['buffer', 'Buffer'],
+        }),
+        new webpack.ProvidePlugin({
+            process: 'process/browser'
         })
     ]
 }
