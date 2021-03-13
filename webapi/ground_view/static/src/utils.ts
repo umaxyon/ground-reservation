@@ -43,6 +43,10 @@ function ajax(param: IAjaxParam) {
       })
 }
 
+export function arrayMarge(arr1:string[], arr2:string[]) {
+  return Array.from(new Set([...arr1, ...arr2]));
+}
+
 export function isEmpty(obj: {}) {
   return !Object.keys(obj).length;
 }
