@@ -1,10 +1,12 @@
 import { configureStore } from '@reduxjs/toolkit';
 import PlanListSlice from './modules/PlanListSlice';
+import TargetsSlice from './modules/TargetsSlice';
 
 
 const store = configureStore({
     reducer: {
-        PlanListSlice
+        PlanListSlice,
+        TargetsSlice
     }
 });
 
