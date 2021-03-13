@@ -4,14 +4,17 @@ import { Select, ListItemText, Checkbox, MenuItem, InputLabel, Chip } from '@mat
 
 const createCss = (width: string) => makeStyles(() => ({
     chip: {
-        margin: 1,
+        marginLeft: '1px',
+        marginTop: '-5px',
+        marginBottom: '-2px',
         fontSize: '0.45em'
     },
     valSelect: {
         width: (width || '255px')
     },
     label: {
-        fontSize: '0.85em'
+        fontSize: '0.85em',
+        marginBottom: '4px'
     }
 }))
 
