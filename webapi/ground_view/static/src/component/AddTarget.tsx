@@ -10,6 +10,7 @@ import addMonths from 'date-fns/addMonths';
 import format from 'date-fns/format';
 import MultiSelect from './MultiSelect';
 import {
+    createTargetAndClose,
     changeTargetsDate, 
     changeTargetArea, 
     changeTargetStadium,
@@ -142,7 +143,7 @@ const AddTarget: React.FC<any> = (props) => {
             dispatch(openErrorDialog({title: "ターゲットがありません", message: "ターゲットを1件以上選択してください"}));
             return
         }
-
+        dispatch(createTargetAndClose({}));
     }
 
     const handleErrorOkClick = () => {
