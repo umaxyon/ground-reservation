@@ -11,15 +11,15 @@ import format from 'date-fns/format';
 import MultiSelect from './MultiSelect';
 import {
     changeTargetsDate, 
-    chageTargetArea, 
-    chageTargetStadium, 
+    changeTargetArea, 
+    changeTargetStadium,
     changeTargetTime, 
     openGomenDialog, ITimes, IGoumen,
     GoumenDialog, closeGomenDialog, commitGoumenDialog, checkGoumen } from '../modules/TargetsSlice';
 import { MaterialUiPickersDate } from '@material-ui/pickers/typings/date';
 import ScrollDiv from './ScrollDiv';
 import GridOnIcon from '@material-ui/icons/GridOn';
-import { STADIUMS, STADIUM_KEYS, GOUMENS, TIME_RANGES } from '../modules/Constants';
+import { AREAS, AREA_KEYS, STADIUMS, STADIUM_KEYS, GOUMENS, TIME_RANGES } from '../modules/Constants';
 
 const timeSelectWidth = 335
 
@@ -29,6 +29,14 @@ const createCss = makeStyles(() => ({
     },
     dialogRoot: {
         margin: '20px'
+    },
+    dialogAction: {
+        paddingLeft: '25px'
+    },
+    selectCountTypo: {
+        paddingLeft: '10px',
+        marginBottom: '-5px',
+        fontWeight: 'bold'
     },
     rowContainer: {
         position: 'relative',
@@ -73,20 +81,9 @@ const createCss = makeStyles(() => ({
     }
 }))
 
-const areas: string[] = [
-    '大森', '大田ST', '調布', '糀谷・羽田', '蒲田'
-]
-
-const defaultAreas: string[] = ['蒲田']
-
-const areaKeys = new Map(Object.entries({
-    '大森': 'oomori', '大田ST': 'oota', '調布': 'chofu', '糀谷・羽田': 'kojitani', '蒲田': 'kamata'
-}))
-
 const countSelectGoumen = (area: string, stadium: string, goumens: IGoumen) => {
     return (! (area in goumens) || ! (stadium in goumens[area])) ? 0 : goumens[area][stadium].length;
 }
-
 
 const AddTarget: React.FC<any> = (props) => {
     const dispatch = useAppDispatch();
@@ -101,11 +98,11 @@ const AddTarget: React.FC<any> = (props) => {
     }
 
     const handleAreaChange = (event: React.ChangeEvent<{ value: unknown }>) => {
-        dispatch(chageTargetArea(event.target.value));
+        dispatch(changeTargetArea(event.target.value));
     }
 
     const handleStadiumChange = (area: string) => (event: React.ChangeEvent<{ value: unknown }>) => {
-        dispatch(chageTargetStadium({area, value:event.target.value}));
+        dispatch(changeTargetStadium({area, value:event.target.value}));
     }
 
     const handleTimeChange = (area: string, stadium: string) => (event: React.ChangeEvent<{ value: unknown }>) => {
@@ -136,6 +133,7 @@ const AddTarget: React.FC<any> = (props) => {
     const selectedTimesOb: ITimes = useAppSelector(st => st.TargetsSlice.condition.times);
     const goumenDialog: GoumenDialog = useAppSelector(st => st.TargetsSlice.goumenDialog);
     const selectedGoumensOb: IGoumen = useAppSelector(st => st.TargetsSlice.condition.goumens);
+    const total = useAppSelector(st => st.TargetsSlice.condition.total);
 
     const goumenDialogCurrentValues = GOUMENS.get(goumenDialog.stadium) || [];
     const goumeDialogContent = (
@@ -168,8 +166,8 @@ const AddTarget: React.FC<any> = (props) => {
 
     const areaGrids = selectedAreas.map(v => {
         const area: string = v || "";
-        const k = areaKeys.get(area);
-        const stadiumVals = STADIUMS.get(area);
+        const k = AREA_KEYS.get(area);
+        const stadiumVals = STADIUMS[area];
         const selectedStadiums = selectedStadiumMap.get(area) || stadiumVals || [];
 
         const stadiumGrid = selectedStadiums.map((stadium: string) => {
@@ -230,11 +228,19 @@ const AddTarget: React.FC<any> = (props) => {
         <div>
             <Dialog fullScreen={true} open={props.open} onClose={props.handleClose} className={css.dialogRoot}>
                 <DialogTitle>ターゲットの追加</DialogTitle>
-                <DialogActions>
-                    <Button variant="outlined" onClick={props.handleClose}>キャンセル</Button>
+                <DialogActions className={css.dialogAction}>
+                    <Grid container={true} spacing={2}>
+                        <Grid item={true}><Button variant="outlined" onClick={props.handleClose}>キャンセル</Button></Grid>
+                        <Grid item={true}><Button variant="contained" color="secondary" onClick={props.handleClose}>追加</Button></Grid>
+                    </Grid>
                 </DialogActions>
                 <DialogContent>
                     <Grid container={true} direction="column" className={css.rowContainer} spacing={3}>
+                        <Grid item={true}>
+                            <Typography variant="subtitle2" className={css.selectCountTypo}>
+                                {total} 件選択中
+                            </Typography>
+                        </Grid>
                         <Grid item={true} container={true} direction="row" spacing={3}>
                             <Grid item={true}>
                                 <DatePicker
@@ -244,12 +250,12 @@ const AddTarget: React.FC<any> = (props) => {
                             </Grid>
                             <Grid item={true}>
                                 <MultiSelect 
-                                    id="area" value={selectedAreas} valueList={areas} width="270px" label="エリア"
+                                    id="area" value={selectedAreas} valueList={AREAS} width="270px" label="エリア"
                                     handleChange={handleAreaChange} />
                             </Grid>
                         </Grid>
                         <Grid item={true} container={true} className={css.scrollRootGrid}>
-                            <ScrollDiv diffHeight={220} width="100%" padding='10px 2px 5px 2px'>
+                            <ScrollDiv diffHeight={256} width="100%" padding='10px 2px 5px 2px'>
                                 <div className={css.scrollContentWrap}>
                                     {areaGrids}
                                 </div>

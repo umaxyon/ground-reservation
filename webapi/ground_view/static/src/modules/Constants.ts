@@ -1,10 +1,27 @@
-export const STADIUMS: Map<string, string[]> = new Map(Object.entries({
+export const AREAS: string[] = [
+    '大森', '大田ST', '調布', '糀谷・羽田', '蒲田'
+]
+
+export const AREA_KEYS = new Map(Object.entries({
+    '大森': 'oomori', '大田ST': 'oota', '調布': 'chofu', '糀谷・羽田': 'kojitani', '蒲田': 'kamata'
+}))
+
+
+export const STADIUMS: {[key: string]: string[]} = {
     '大森': ['昭和島運動場', '平和島公園'],
     '大田ST': ['大田ｽﾀｼﾞｱﾑ'],
     '調布': ['東調布公園'],
     '糀谷・羽田': ['萩中公園'],
     '蒲田': ['多摩川緑地', '六郷橋緑地', '大師橋緑地', 'ｶﾞｽ橋緑地']
-}))
+}
+
+export const STADIUMS_DEFAULT_SELECT: {[key: string]: string[]} = {
+    '大森': ['昭和島運動場', '平和島公園'],
+    '大田ST': ['大田ｽﾀｼﾞｱﾑ'],
+    '調布': ['東調布公園'],
+    '糀谷・羽田': ['萩中公園'],
+    '蒲田': ['多摩川緑地', '六郷橋緑地', 'ｶﾞｽ橋緑地']
+}
 
 
 export const TIME_RANGES: Map<string, string[]> = new Map(Object.entries({
@@ -19,6 +36,18 @@ export const TIME_RANGES: Map<string, string[]> = new Map(Object.entries({
     'ｶﾞｽ橋緑地': ['07-09','09-11','11-13','13-15','15-17']
 }))
 
+export const TIME_RANGES_DEFAULT_SELECT: {[key: string]: string[]} = {
+    '昭和島運動場': ['07-09','09-11','11-13'],
+    '平和島公園': ['07-09','09-11','11-13'],
+    '大田ｽﾀｼﾞｱﾑ': ['07-09','09-11','11-13'],
+    '東調布公園': ['08-10','10-12'],
+    '萩中公園': ['08-10','10-12'],
+    '多摩川緑地': ['07-09','09-11'],
+    '六郷橋緑地': ['07-09','09-11'],
+    '大師橋緑地': ['07-09','09-11'],
+    'ｶﾞｽ橋緑地': ['07-09','09-11']
+}
+
 
 export const GOUMENS: Map<string, string[]> = new Map(Object.entries({
     '昭和島運動場': ['1','2','3'],
@@ -31,6 +60,18 @@ export const GOUMENS: Map<string, string[]> = new Map(Object.entries({
     '大師橋緑地': ['1','2'],
     'ｶﾞｽ橋緑地': ['1','2','3','4','6','7','8']
 }))
+
+export const GOUMENS_DEFAULT_SELECT: {[key: string]: string[]} = {
+    '昭和島運動場': ['1','2','3'],
+    '平和島公園': ['1'],
+    '大田ｽﾀｼﾞｱﾑ': ['1'],
+    '東調布公園': ['1'],
+    '萩中公園': ['1'],
+    '多摩川緑地': ['1','2','3','4','5','6','7','8','9','10','11','12','13','14','15','16'],
+    '六郷橋緑地': ['1','2','3','4','5'],
+    '大師橋緑地': ['1','2'],
+    'ｶﾞｽ橋緑地': ['1','2','3','4','6','7','8']
+}
 
 
 export const STADIUM_KEYS: Map<string, string> = new Map(Object.entries({
