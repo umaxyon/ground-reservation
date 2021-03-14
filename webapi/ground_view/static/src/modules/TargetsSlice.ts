@@ -1,4 +1,6 @@
 import { createSlice, Dispatch } from "@reduxjs/toolkit";
+import format from 'date-fns/format';
+import addDays from 'date-fns/addDays';
 import {
     AREAS,
     STADIUMS, STADIUMS_DEFAULT_SELECT,
@@ -44,7 +46,6 @@ interface Target {
 }
 
 interface TargetsState {
-    state: 'initial'|'modify_date'|'modify_area',
     open: boolean,
     condition: Target,
     targets: Target[],
@@ -76,12 +77,11 @@ const initialGomenDialog: GoumenDialog = {
 
 const initialErrorDialog: ErrorDialog = {
     open: false,
-    title: "エラー",
+    title: "",
     message: ""
 }
 
 const initialState: TargetsState = {
-    state: 'initial',
     open: false,
     condition,
     targets: [],
@@ -167,6 +167,7 @@ const TargetsSlice = createSlice({
                     state.condition.goumens[area][stadium] = GOUMENS_DEFAULT_SELECT[stadium];
                 });
             });
+            state.condition.date = format(addDays(new Date(), 3), 'yyyy/MM/dd');
             state.condition.total = countGoumens(state.condition);
             state.open = true;
         },
@@ -175,7 +176,6 @@ const TargetsSlice = createSlice({
         },
         changeTargetsDate: (state, action) => {
             state.condition.date = action.payload;
-            state.targets = state.targets.map(t => t.date = action.payload)
         },
         changeTargetArea: (state, action) => {
             const newArea: string[] = action.payload;
@@ -243,6 +243,13 @@ const TargetsSlice = createSlice({
             }
             state.goumenDialog.checked = newArr;
         },
+        createTargetAndClose: (state, action) => {
+            const target = state.condition
+
+            // TODO 同一日付がいた場合、どこでマージするか
+            state.targets.push(target)
+            state.open = false;
+        },
         openErrorDialog: (state, action) => {
             const { title, message } = action.payload;
             state.errorDialog.title = title;
@@ -276,5 +283,6 @@ export const {
     commitGoumenDialog,
     checkGoumen,
     openErrorDialog,
-    closeErrorDialog } = TargetsSlice.actions;
+    closeErrorDialog,
+    createTargetAndClose } = TargetsSlice.actions;
 export default TargetsSlice.reducer;
