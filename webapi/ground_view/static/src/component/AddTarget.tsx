@@ -15,7 +15,8 @@ import {
     changeTargetStadium,
     changeTargetTime, 
     openGomenDialog, ITimes, IGoumen,
-    GoumenDialog, closeGomenDialog, commitGoumenDialog, checkGoumen } from '../modules/TargetsSlice';
+    GoumenDialog, closeGomenDialog, commitGoumenDialog, checkGoumen,
+    ErrorDialog, openErrorDialog, closeErrorDialog } from '../modules/TargetsSlice';
 import { MaterialUiPickersDate } from '@material-ui/pickers/typings/date';
 import ScrollDiv from './ScrollDiv';
 import GridOnIcon from '@material-ui/icons/GridOn';
@@ -92,6 +93,16 @@ const AddTarget: React.FC<any> = (props) => {
     const startDay = addDays(dt, 3)
     const endDay = addMonths(dt, 2)
 
+    const selectedDate = useAppSelector(st => st.TargetsSlice.condition.date) || startDay;
+    const selectedAreas = useAppSelector(st => st.TargetsSlice.condition.areas) || [];
+    const selectedStadiumOb = useAppSelector(st => st.TargetsSlice.condition.stadiums);
+    const selectedStadiumMap = new Map(Object.entries(selectedStadiumOb));
+    const selectedTimesOb: ITimes = useAppSelector(st => st.TargetsSlice.condition.times);
+    const goumenDialog: GoumenDialog = useAppSelector(st => st.TargetsSlice.goumenDialog);
+    const selectedGoumensOb: IGoumen = useAppSelector(st => st.TargetsSlice.condition.goumens);
+    const errorDialog: ErrorDialog = useAppSelector(st => st.TargetsSlice.errorDialog);
+    const total = useAppSelector(st => st.TargetsSlice.condition.total);
+
     const handleDateChange = (dt: MaterialUiPickersDate) => {
         const strDate = format(dt as Date, 'yyyy/MM/dd')
         dispatch(changeTargetsDate(strDate));
@@ -126,14 +137,17 @@ const AddTarget: React.FC<any> = (props) => {
         dispatch(commitGoumenDialog({}));
     }
 
-    const selectedDate = useAppSelector(st => st.TargetsSlice.condition.date) || startDay;
-    const selectedAreas = useAppSelector(st => st.TargetsSlice.condition.areas) || [];
-    const selectedStadiumOb = useAppSelector(st => st.TargetsSlice.condition.stadiums);
-    const selectedStadiumMap = new Map(Object.entries(selectedStadiumOb));
-    const selectedTimesOb: ITimes = useAppSelector(st => st.TargetsSlice.condition.times);
-    const goumenDialog: GoumenDialog = useAppSelector(st => st.TargetsSlice.goumenDialog);
-    const selectedGoumensOb: IGoumen = useAppSelector(st => st.TargetsSlice.condition.goumens);
-    const total = useAppSelector(st => st.TargetsSlice.condition.total);
+    const handleCommitBtnClick = () => {
+        if (total === 0) {
+            dispatch(openErrorDialog({title: "ターゲットがありません", message: "ターゲットを1件以上選択してください"}));
+            return
+        }
+
+    }
+
+    const handleErrorOkClick = () => {
+        dispatch(closeErrorDialog({}));
+    }
 
     const goumenDialogCurrentValues = GOUMENS.get(goumenDialog.stadium) || [];
     const goumeDialogContent = (
@@ -160,6 +174,22 @@ const AddTarget: React.FC<any> = (props) => {
             <DialogActions>
                 <Button autoFocus={true} onClick={handleGoumenClose} color="primary">キャンセル</Button>
                 <Button onClick={handleGoumenOkClick} color="primary">OK</Button>
+            </DialogActions>
+        </Dialog>
+    )
+
+    const alertDialogContent = (
+        <Dialog open={errorDialog.open} onClose={handleErrorOkClick} disableBackdropClick={true}>
+            <DialogTitle>{errorDialog.title}</DialogTitle>
+            <DialogContent>
+                <Grid container={true}>
+                    <Grid item={true}>
+                        {errorDialog.message}
+                    </Grid>
+                </Grid>
+            </DialogContent>
+            <DialogActions>
+                <Button onClick={handleErrorOkClick} color="primary">OK</Button>
             </DialogActions>
         </Dialog>
     )
@@ -231,7 +261,7 @@ const AddTarget: React.FC<any> = (props) => {
                 <DialogActions className={css.dialogAction}>
                     <Grid container={true} spacing={2}>
                         <Grid item={true}><Button variant="outlined" onClick={props.handleClose}>キャンセル</Button></Grid>
-                        <Grid item={true}><Button variant="contained" color="secondary" onClick={props.handleClose}>追加</Button></Grid>
+                        <Grid item={true}><Button variant="contained" color="secondary" onClick={handleCommitBtnClick}>追加</Button></Grid>
                     </Grid>
                 </DialogActions>
                 <DialogContent>
@@ -265,6 +295,7 @@ const AddTarget: React.FC<any> = (props) => {
                 </DialogContent>
             </Dialog>
             {goumeDialogContent}
+            {alertDialogContent}
         </div>
     )
 }

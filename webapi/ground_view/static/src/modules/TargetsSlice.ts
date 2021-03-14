@@ -28,6 +28,11 @@ export interface GoumenDialog {
     stadium: string,
     checked: string[]
 }
+export interface ErrorDialog {
+    open: boolean,
+    title: string,
+    message: string
+}
 
 interface Target {
     date: string,
@@ -43,7 +48,8 @@ interface TargetsState {
     open: boolean,
     condition: Target,
     targets: Target[],
-    goumenDialog: GoumenDialog
+    goumenDialog: GoumenDialog,
+    errorDialog: ErrorDialog
 }
 
 const initStadiumsOb = (): IStadium => {
@@ -68,12 +74,19 @@ const initialGomenDialog: GoumenDialog = {
     checked: []
 }
 
+const initialErrorDialog: ErrorDialog = {
+    open: false,
+    title: "エラー",
+    message: ""
+}
+
 const initialState: TargetsState = {
     state: 'initial',
     open: false,
     condition,
     targets: [],
-    goumenDialog: initialGomenDialog
+    goumenDialog: initialGomenDialog,
+    errorDialog: initialErrorDialog
 }
 
 const countGoumens = (condition: Target) => {
@@ -230,6 +243,15 @@ const TargetsSlice = createSlice({
             }
             state.goumenDialog.checked = newArr;
         },
+        openErrorDialog: (state, action) => {
+            const { title, message } = action.payload;
+            state.errorDialog.title = title;
+            state.errorDialog.message = message;
+            state.errorDialog.open = true;
+        },
+        closeErrorDialog: (state, action) => {
+            state.errorDialog = initialErrorDialog;
+        },
         updateTotal: (state, action) => {
             state.condition.total = countGoumens(state.condition);
         }
@@ -252,5 +274,7 @@ export const {
     openGomenDialog,
     closeGomenDialog,
     commitGoumenDialog,
-    checkGoumen } = TargetsSlice.actions;
+    checkGoumen,
+    openErrorDialog,
+    closeErrorDialog } = TargetsSlice.actions;
 export default TargetsSlice.reducer;
