@@ -47,6 +47,7 @@
     "@reduxjs/toolkit": "^1.5.0",
     "axios": "^0.21.1",
     "date-fns": "^2.19.0",
+    "material-table": "^1.69.2",
     "react": "^16.14.0",
     "react-dom": "^16.14.0",
     "react-redux": "^7.2.2",
