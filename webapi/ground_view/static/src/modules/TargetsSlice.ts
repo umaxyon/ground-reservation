@@ -36,7 +36,7 @@ export interface ErrorDialog {
     message: string
 }
 
-interface Target {
+export interface Target {
     date: string,
     areas: string[],
     stadiums: IStadium,
@@ -47,10 +47,12 @@ interface Target {
 
 interface TargetsState {
     open: boolean,
+    mode: string,
     condition: Target,
     targets: Target[],
     goumenDialog: GoumenDialog,
-    errorDialog: ErrorDialog
+    errorDialog: ErrorDialog,
+    dateConfrict: string
 }
 
 const initStadiumsOb = (): IStadium => {
@@ -83,10 +85,12 @@ const initialErrorDialog: ErrorDialog = {
 
 const initialState: TargetsState = {
     open: false,
+    mode: 'add',
     condition,
     targets: [],
     goumenDialog: initialGomenDialog,
-    errorDialog: initialErrorDialog
+    errorDialog: initialErrorDialog,
+    dateConfrict: ''
 }
 
 const countGoumens = (condition: Target) => {
@@ -97,7 +101,7 @@ const countGoumens = (condition: Target) => {
             const selectTimeCnt = (area in times && stadium in times[area]) ? times[area][stadium].length : 0;
             return goumens[area][stadium].length * selectTimeCnt;
         })
-    }).reduce((ac, cv) => ac.concat(cv)).reduce((ac, cv) => ac + cv);
+    }).reduce((ac, cv) => ac.concat(cv), []).reduce((ac, cv) => ac + cv, 0);
     return total;
 }
 
@@ -169,13 +173,23 @@ const TargetsSlice = createSlice({
             });
             state.condition.date = format(addDays(new Date(), 3), 'yyyy/MM/dd');
             state.condition.total = countGoumens(state.condition);
+            state.mode = 'add';
+            state.open = true;
+        },
+        openEditTarget: (state, action) => {
+            const dt = action.payload.row.date;
+            const conditions: Target[] = state.targets.filter(t => t.date === dt)
+            state.condition = conditions[0];
+            state.mode = 'edit';
             state.open = true;
         },
         cancelCloseTarget: (state, action) => {
+            state.condition = {...condition}
             state.open = false;
         },
         changeTargetsDate: (state, action) => {
-            state.condition.date = action.payload;
+            const dt = action.payload;
+            state.condition.date = dt;
         },
         changeTargetArea: (state, action) => {
             const newArea: string[] = action.payload;
@@ -246,9 +260,33 @@ const TargetsSlice = createSlice({
         createTargetAndClose: (state, action) => {
             const target = state.condition
 
-            // TODO 同一日付がいた場合、どこでマージするか
-            state.targets.push(target)
-            state.open = false;
+            const conditions: Target[] = state.targets.filter(t => t.date === target.date)
+            if (state.mode !== 'edit' && conditions.length != 0) {
+                state.dateConfrict = target.date
+            } else {
+                if (state.mode === 'edit') {
+                    const targets: Target[] = state.targets.filter(t => t.date !== target.date)
+                    state.targets = targets;
+                }
+                state.targets.push(target);
+                state.condition = {...condition}
+                state.open = false;
+            }
+        },
+        decideDateConfrict: (state, action) => {
+            const mode = action.payload;
+            if (mode === 'editOld') {
+                const conditions: Target[] = state.targets.filter(t => t.date === state.dateConfrict)
+                state.mode = 'edit';
+                state.condition = conditions[0];
+            } else {
+                const targets: Target[] = state.targets.filter(t => t.date !== state.dateConfrict)
+                targets.push(state.condition);
+                state.targets = targets;
+                state.condition = {...condition}
+                state.open = false;
+            }
+            state.dateConfrict = '';
         },
         openErrorDialog: (state, action) => {
             const { title, message } = action.payload;
@@ -258,6 +296,9 @@ const TargetsSlice = createSlice({
         },
         closeErrorDialog: (state, action) => {
             state.errorDialog = initialErrorDialog;
+        },
+        clearAllTarget: (state, action) => {
+            state.targets = []
         },
         updateTotal: (state, action) => {
             state.condition.total = countGoumens(state.condition);
@@ -272,6 +313,7 @@ const TargetsSlice = createSlice({
 
 export const {
     initNewTarget,
+    openEditTarget,
     cancelCloseTarget,
     changeTargetsDate,
     changeTargetArea,
@@ -284,5 +326,7 @@ export const {
     checkGoumen,
     openErrorDialog,
     closeErrorDialog,
-    createTargetAndClose } = TargetsSlice.actions;
+    createTargetAndClose,
+    clearAllTarget,
+    decideDateConfrict } = TargetsSlice.actions;
 export default TargetsSlice.reducer;

@@ -17,11 +17,12 @@ import {
     changeTargetTime, 
     openGomenDialog, ITimes, IGoumen,
     GoumenDialog, closeGomenDialog, commitGoumenDialog, checkGoumen,
-    ErrorDialog, openErrorDialog, closeErrorDialog } from '../modules/TargetsSlice';
+    ErrorDialog, openErrorDialog, closeErrorDialog, decideDateConfrict } from '../modules/TargetsSlice';
 import { MaterialUiPickersDate } from '@material-ui/pickers/typings/date';
 import ScrollDiv from './ScrollDiv';
 import GridOnIcon from '@material-ui/icons/GridOn';
 import { AREAS, AREA_KEYS, STADIUMS, STADIUM_KEYS, GOUMENS, TIME_RANGES } from '../modules/Constants';
+import { AlertDialog, ConfirmDialog } from './Dialogs';
 
 const timeSelectWidth = 335
 
@@ -94,6 +95,9 @@ const AddTarget: React.FC<any> = (props) => {
     const startDay = addDays(dt, 3)
     const endDay = addMonths(dt, 2)
 
+    const mode = useAppSelector(st => st.TargetsSlice.mode);
+    const strMode = (mode === 'edit') ? '編集' : '追加';
+    const dateConfrict = useAppSelector(st => st.TargetsSlice.dateConfrict);
     const selectedDate = useAppSelector(st => st.TargetsSlice.condition.date) || startDay;
     const selectedAreas = useAppSelector(st => st.TargetsSlice.condition.areas) || [];
     const selectedStadiumOb = useAppSelector(st => st.TargetsSlice.condition.stadiums);
@@ -150,6 +154,10 @@ const AddTarget: React.FC<any> = (props) => {
         dispatch(closeErrorDialog({}));
     }
 
+    const handleDateConfrict = (mode: string) => () => {
+        dispatch(decideDateConfrict(mode))
+    }
+
     const goumenDialogCurrentValues = GOUMENS.get(goumenDialog.stadium) || [];
     const goumeDialogContent = (
         <Dialog open={goumenDialog.open} onClose={handleGoumenClose} disableBackdropClick={true}>
@@ -175,22 +183,6 @@ const AddTarget: React.FC<any> = (props) => {
             <DialogActions>
                 <Button autoFocus={true} onClick={handleGoumenClose} color="primary">キャンセル</Button>
                 <Button onClick={handleGoumenOkClick} color="primary">OK</Button>
-            </DialogActions>
-        </Dialog>
-    )
-
-    const alertDialogContent = (
-        <Dialog open={errorDialog.open} onClose={handleErrorOkClick} disableBackdropClick={true}>
-            <DialogTitle>{errorDialog.title}</DialogTitle>
-            <DialogContent>
-                <Grid container={true}>
-                    <Grid item={true}>
-                        {errorDialog.message}
-                    </Grid>
-                </Grid>
-            </DialogContent>
-            <DialogActions>
-                <Button onClick={handleErrorOkClick} color="primary">OK</Button>
             </DialogActions>
         </Dialog>
     )
@@ -258,11 +250,11 @@ const AddTarget: React.FC<any> = (props) => {
     return (
         <div>
             <Dialog fullScreen={true} open={props.open} onClose={props.handleClose} className={css.dialogRoot}>
-                <DialogTitle>ターゲットの追加</DialogTitle>
+                <DialogTitle>ターゲットの{strMode}</DialogTitle>
                 <DialogActions className={css.dialogAction}>
                     <Grid container={true} spacing={2}>
                         <Grid item={true}><Button variant="outlined" onClick={props.handleClose}>キャンセル</Button></Grid>
-                        <Grid item={true}><Button variant="contained" color="secondary" onClick={handleCommitBtnClick}>追加</Button></Grid>
+                        <Grid item={true}><Button variant="contained" color="secondary" onClick={handleCommitBtnClick}>{strMode}</Button></Grid>
                     </Grid>
                 </DialogActions>
                 <DialogContent>
@@ -296,7 +288,22 @@ const AddTarget: React.FC<any> = (props) => {
                 </DialogContent>
             </Dialog>
             {goumeDialogContent}
-            {alertDialogContent}
+            <AlertDialog 
+                open={errorDialog.open} 
+                title={errorDialog.title}
+                message={errorDialog.message} 
+                handleOkClick={handleErrorOkClick}
+            />
+            <ConfirmDialog
+                open={(dateConfrict !== '')}
+                title="日付重複"
+                message={`${dateConfrict}のターゲットがすでに追加されています。`}
+                btnDirection="column"
+                txtBtn1="登録済みデータを優先して編集モードに入る"
+                txtBtn2="登録済みデータを破棄して現在の内容で上書く"
+                handleClick1={handleDateConfrict("editOld")}
+                handleClick2={handleDateConfrict("forceUpdate")}
+            />
         </div>
     )
 }
