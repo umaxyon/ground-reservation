@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useHistory } from 'react-router-dom';
 import { useAppDispatch, useAppSelector } from '../hooks';
 import { makeStyles, createStyles, Theme } from '@material-ui/core/styles';
@@ -17,6 +17,7 @@ import { TableIcons, TableLocalization } from './TableConst';
 import { clearAllTarget, openEditTarget } from '../modules/TargetsSlice';
 import { submitPlan, convertTargetList, convertTargetListForSubmit } from '../modules/PlanListSlice';
 import { SUB_DOMAIN } from '../modules/Constants';
+import { changeNavi } from '../modules/PlanListSlice';
 
 
 const useStyles = makeStyles((theme: Theme) => 
@@ -46,11 +47,19 @@ const AddPlan: React.FC<any> = (props) => {
     const dispatch = useAppDispatch();
     const history = useHistory();
     const css = useStyles();
-
+    
+    const addPlanResp = useAppSelector(st => st.PlanListSlice.addPlanResp);
     const open = useAppSelector(st => st.TargetsSlice.open);
     let targets = useAppSelector(st => st.TargetsSlice.targets);
     targets = targets.slice().sort((a, b) => (a.date === b.date) ? 0 : (a.date < b.date) ? -1 : 1);
     const itemList = convertTargetList(targets);
+
+    useEffect(() => {
+        if (addPlanResp) {
+            history.push(`/${SUB_DOMAIN}/`);
+            dispatch(changeNavi('pList'))
+        }
+    }, [addPlanResp, dispatch])
 
     const handleClickOpen = () => {
         dispatch(initNewTarget(['蒲田']))
@@ -62,7 +71,6 @@ const AddPlan: React.FC<any> = (props) => {
 
     const handleClickSave = () => {
         dispatch(submitPlan(convertTargetListForSubmit(targets)));
-        history.push(`/${SUB_DOMAIN}/`);
     }
 
     const handleClickTargetDelete = () => {
