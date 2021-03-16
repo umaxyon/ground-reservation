@@ -12,17 +12,25 @@ export type PlanType = {
     reserved_cnt: number
 }
 
-export type PlanListType = {[key: string] : [PlanType]};
+export type PlanListType = {
+    [key: string] : [PlanType]
+};
 
 
 interface PlanListState {
     loading: 'idle' | 'pending' | 'succeeded' | 'failed',
-    plans: PlanListType
+    plans: PlanListType,
+    count: number,
+    addPlanResp: boolean,
+    navi: 'pList' | 'addPlan' | 'settings'
 }
 
 const initialState: PlanListState = {
     loading: 'idle',
-    plans: {} 
+    plans: {},
+    count: -1,
+    addPlanResp: false,
+    navi: 'pList'
 }
 
 export const fetchPlanList = createAsyncThunk(
@@ -80,17 +88,22 @@ const PlanListSlice = createSlice({
     name: "PlanList",
     initialState,
     reducers: {
+        changeNavi: (state, action) => {
+            state.navi = action.payload;
+        }
     },
     extraReducers: builder => {
         builder.addCase(fetchPlanList.fulfilled, (state, action) => {
-            state.plans = action.payload;
+            state.plans = action.payload.plans;
+            state.count = action.payload.count;
         });
         builder.addCase(submitPlan.fulfilled, (state, action) => {
-            console.log('hoge');
+            state.addPlanResp = true;
         });
     }
 });
 
 export const {
+    changeNavi
 } = PlanListSlice.actions;
 export default PlanListSlice.reducer;
