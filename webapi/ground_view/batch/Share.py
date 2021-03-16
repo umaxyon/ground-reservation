@@ -1,5 +1,6 @@
 import datetime as dt
 from enum import Enum
+from typing import List
 
 time_ptn = {
     1: ['07-09', '09-11', '11-13', '13-15', '15-17'],
@@ -15,7 +16,8 @@ timebox_table = {
     '萩中公園': {0: time_ptn[3]},
     '多摩川緑地': {0: time_ptn[1]},
     '六郷橋緑地': {0: time_ptn[1]},
-    '大師橋緑地': {0: time_ptn[1]}
+    '大師橋緑地': {0: time_ptn[1]},
+    'ｶﾞｽ橋緑地': {0: time_ptn[1]}
 }
 
 
@@ -47,7 +49,7 @@ class Stadium(Enum):
         v = [v for v in Stadium.members() if v.full_nm == full_nm]
         return v[0] if len(v) == 1 else None
 
-    def timebox(self):
+    def timebox(self) -> List:
         return TimeboxResolver(self).get()
 
     SHOWAJIMA = (0, '昭和島運動場野球場', '昭和島運動場')
@@ -113,13 +115,16 @@ class TargetRowHolder:
     def __init__(self, post_row):
         y, m, d = post_row['date'].split('/')
 
+        stadium = Stadium.nm_of(post_row['stadium'])
+
         self.status = '未予約'
         self.ym = f"{y}{m}"
         self.dt = d
         self.week_day = get_weekday(y, m, d)
-        self.area = d['area']
-        self.gname = d['stadium']
-        self.goumens = d['goumen'] or []
+        self.area = post_row['area']
+        self.gname = stadium.nm
+        self.timebox = stadium.timebox().index(post_row['time'])
+        self.goumens = post_row['goumen'] or []
 
     def ymd(self):
         return f"{self.ym}{self.dt}"
@@ -132,7 +137,7 @@ class PlanTargetHolder:
     ymd_min = ""
     ymd_max = ""
     areas = set([])
-    targets = []
+    targets: List[TargetRowHolder] = []
 
     def __init__(self, items):
         for r in items:
@@ -206,6 +211,6 @@ class Target(ReservationModel):
         return (
             f'Target('
             f'[{self.status}]{self.ym}{self.dt}({self.week_day}) '
-            f'{self.area} {self.gname}[{self.gno_csv if self.gno_csv is None else "all"}] '
+            f'{self.area} {self.gname}[{self.gno_csv if self.gno_csv is not None else "all"}] '
             f'tm={self.timebox} p={self.plan_id})'
         )

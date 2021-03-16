@@ -2,7 +2,7 @@ import itertools
 from ReservationCalender import ReservationCalender
 from Scraper import Scraper
 from GrandInfo import GrandInfo
-from Model import Area
+from ground_view.batch.Share import Area
 
 
 class Reserver:

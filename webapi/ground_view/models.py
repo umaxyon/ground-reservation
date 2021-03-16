@@ -1,6 +1,8 @@
 from django.db import models
 from django.core.validators import MaxLengthValidator, RegexValidator
 
+from .batch.Share import PlanTargetHolder
+
 
 class GroundInfo(models.Model):
     ym = models.IntegerField('年月', validators=[MaxLengthValidator(6)])
@@ -31,8 +33,21 @@ class ReservationPlan(models.Model):
     reserved_cnt = models.IntegerField('予約済み数', validators=[MaxLengthValidator(3)], default=0)
 
     @staticmethod
+    def save_plan(dat: PlanTargetHolder):
+        plan = ReservationPlan(
+            status='監視中',
+            area_csv=','.join(dat.areas),
+            ymd_range=f"{dat.ymd_min}-{dat.ymd_max}",
+            reserved_cnt=0,
+            target_cnt=dat.target_count()
+        )
+        plan.save()
+        return plan.id
+
+    @staticmethod
     def convert_request_to_plan(items):
-        # TargetRowHolder(items)
+        holder = PlanTargetHolder(items)
+        print(holder.target_count())
         pass
 
 
@@ -40,11 +55,28 @@ class ReservationTarget(models.Model):
     plan = models.ForeignKey(ReservationPlan, on_delete=models.CASCADE, null=True)
     status = models.CharField('状態', max_length=10)
 
-    gno = models.IntegerField('号面', validators=[MaxLengthValidator(2)], default=0)
+    # gno = models.IntegerField('号面', validators=[MaxLengthValidator(2)], default=0)
     ym = models.IntegerField('年月', validators=[MaxLengthValidator(6)])
     dt = models.IntegerField('日', validators=[MaxLengthValidator(2)])
     week_day = models.CharField('曜日', max_length=1)
     area = models.CharField('地域', max_length=10)
     gname = models.CharField('グラウンド名', max_length=15)
-    gno_csv = models.CharField('号面CSV', max_length=15, default='')
+    gno_csv = models.CharField('号面CSV', max_length=40, default='')
+    reserve_gno_csv = models.CharField('予約済み号面CSV', max_length=40, default='')
     timebox = models.IntegerField('時間帯', validators=[MaxLengthValidator(2)])
+
+    @staticmethod
+    def save_target(dat: PlanTargetHolder, plan_id):
+        targets = [ReservationTarget(
+            status=th.status,
+            plan_id=plan_id,
+            ym=th.ym,
+            dt=th.dt,
+            week_day=th.week_day,
+            area=th.area,
+            gname=th.gname,
+            timebox=th.timebox,
+            reserve_gno_csv='',
+            gno_csv=','.join(th.goumens)
+        ) for th in dat.targets]
+        ReservationTarget.objects.bulk_create(targets)

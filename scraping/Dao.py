@@ -2,7 +2,7 @@ import datetime
 import os
 import MySQLdb
 from sqlalchemy.pool import QueuePool
-from Model import Plan, Target
+from ground_view.batch.Share import Plan, Target
 
 
 def jst_now():

@@ -1,6 +1,6 @@
 import re
 from Dao import Target
-from Model import CalDay
+from ground_view.batch.Share import CalDay
 
 
 async def get_style(page, elm):

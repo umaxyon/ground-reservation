@@ -1,4 +1,4 @@
-from Model import Stadium
+from ground_view.batch.Share import Stadium
 
 # name_map = {
 #     '昭和島運動場野球場': '昭和島運動場',
@@ -32,12 +32,13 @@ class GrandInfo:
         title = await self.page.evaluate('elm => elm.innerHTML', td)
         ground_name = [v.strip() for v in title.split('<br>')][1]
         buf = ground_name.split('_')
-        name = Stadium.full_nm_of(buf[0]) or buf[0]
+        st = Stadium.full_nm_of(buf[0]) or buf[0]
         # name = name_map[buf[0]] if buf[0] in name_map else buf[0]
         if len(buf) == 2:
-            return name, buf[1].translate(ZEN_HAN_TRANS).replace('号面', '')
+            goumen = buf[1] if buf[1] != '野球場' else '1'
+            return st.nm, goumen.translate(ZEN_HAN_TRANS).replace('号面', '')
         else:
-            return name, ''
+            return st.nm, ''
 
     async def get_trs(self):
         return await self.page.JJ('div > table.STTL > tbody > tr:last-child')
