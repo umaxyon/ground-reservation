@@ -5,6 +5,7 @@ import SportsBaseballOutlinedIcon from '@material-ui/icons/SportsBaseballOutline
 import SettingsApplicationsOutlinedIcon from '@material-ui/icons/SettingsApplicationsOutlined';
 import AddCircleOutlineIcon from '@material-ui/icons/AddCircleOutline';
 import { useHistory } from 'react-router-dom';
+import { SUB_DOMAIN } from '../modules/Constants';
 
 export const bottomNaviHeight = selector({
     key: 'botomNaviHeight',
@@ -28,15 +29,15 @@ const BottomNavi: React.FC<any> = () => {
                 label="プラン一覧"
                 value="pList"
                 icon={<SportsBaseballOutlinedIcon />}
-                onClick={() => push('/dist/')}/>
+                onClick={() => push(`/${SUB_DOMAIN}/`)}/>
             <BottomNavigationAction
                 label="プラン追加" 
                 value="add_plan" icon={<AddCircleOutlineIcon />} 
-                onClick={() => push('/dist/add_plan')} />
+                onClick={() => push(`/${SUB_DOMAIN}/add_plan`)} />
             <BottomNavigationAction
                 label="設定" 
                 value="settings" icon={<SettingsApplicationsOutlinedIcon />} 
-                onClick={() => push('/dist/settings')} />
+                onClick={() => push(`/${SUB_DOMAIN}/settings`)} />
         </BottomNavigation>
     )
 }

@@ -1,3 +1,6 @@
+export const IS_LOCAL = false;
+export const SUB_DOMAIN = (IS_LOCAL) ? 'dist' : 'ground_view';
+
 export const AREAS: string[] = [
     '大森', '大田ST', '調布', '糀谷・羽田', '蒲田'
 ]

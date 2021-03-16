@@ -13,6 +13,9 @@ const defaultParam: IAjaxParam = {
     method: "get",
 }
 
+Axios.defaults.xsrfCookieName = 'csrftoken';
+Axios.defaults.xsrfHeaderName = 'X-CSRFTOKEN';
+
 function ajax(param: IAjaxParam) {
     const p: IAjaxParam = Object.assign({}, defaultParam, param);
     if (param.url) {

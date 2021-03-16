@@ -15,6 +15,9 @@ import { createMuiTheme, ThemeProvider } from '@material-ui/core/styles';
 import MaterialTable, { MTableToolbar } from 'material-table';
 import { TableIcons, TableLocalization } from './TableConst';
 import { clearAllTarget, openEditTarget } from '../modules/TargetsSlice';
+import { submitPlan, convertTargetList, convertTargetListForSubmit } from '../modules/PlanListSlice';
+import { SUB_DOMAIN } from '../modules/Constants';
+
 
 const useStyles = makeStyles((theme: Theme) => 
     createStyles({
@@ -47,6 +50,7 @@ const AddPlan: React.FC<any> = (props) => {
     const open = useAppSelector(st => st.TargetsSlice.open);
     let targets = useAppSelector(st => st.TargetsSlice.targets);
     targets = targets.slice().sort((a, b) => (a.date === b.date) ? 0 : (a.date < b.date) ? -1 : 1);
+    const itemList = convertTargetList(targets);
 
     const handleClickOpen = () => {
         dispatch(initNewTarget(['蒲田']))
@@ -57,7 +61,8 @@ const AddPlan: React.FC<any> = (props) => {
     }
 
     const handleClickSave = () => {
-        history.push('/dist/');
+        dispatch(submitPlan(convertTargetListForSubmit(targets)));
+        history.push(`/${SUB_DOMAIN}/`);
     }
 
     const handleClickTargetDelete = () => {
@@ -67,18 +72,6 @@ const AddPlan: React.FC<any> = (props) => {
     const handleClickRowEdit = (row: any) => {
         dispatch(openEditTarget({row}))
     }
-
-    const itemList:any = [];
-    targets.forEach((t, i) => {
-        Object.keys(t.times).forEach((area, j) => {
-            Object.keys(t.times[area]).forEach((stadium, k) => {
-                const goumen = t.goumens[area][stadium].length;
-                t.times[area][stadium].forEach((time, l) => {
-                    itemList.push({ date: t.date, area, stadium, time, goumen})
-                })
-            });
-        });
-    });
 
     const cellStyle = { 
         paddingTop: '8px', paddingBottom: '7.2px'

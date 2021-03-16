@@ -7,7 +7,7 @@ import ContactlessIcon from '@material-ui/icons/Contactless';
 import ArrowForwardIosIcon from '@material-ui/icons/ArrowForwardIos';
 import IconButton from '@material-ui/core/IconButton';
 import { useHistory } from 'react-router-dom';
-
+import { SUB_DOMAIN } from '../modules/Constants';
 
 export class Plan {
     dat: PlanType
@@ -113,7 +113,7 @@ const PlanRow: React.FC<any> = (props) => {
                 </Grid>
                 <Grid item={true}>
                     <CardContent className={css.rightButton}>
-                        <IconButton onClick={() => push(`/dist/edit_plan/${plan.id()}`)} className={css.vcenter}>
+                        <IconButton onClick={() => push(`/${SUB_DOMAIN}/edit_plan/${plan.id()}`)} className={css.vcenter}>
                             <ArrowForwardIosIcon />
                         </IconButton>
                     </CardContent>
