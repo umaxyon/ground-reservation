@@ -1,5 +1,5 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
-import ajax, { isEmpty } from '../utils';
+import ajax from '../utils';
 import { Target } from '../modules/TargetsSlice';
 
 
@@ -22,7 +22,11 @@ interface PlanListState {
     plans: PlanListType,
     count: number,
     addPlanResp: boolean,
-    navi: 'pList' | 'addPlan' | 'settings'
+    navi: 'pList' | 'addPlan' | 'settings',
+    pickerDate: string,
+    changeDate: boolean,
+    dateConfrict: string,
+    targetEditDate: string
 }
 
 const initialState: PlanListState = {
@@ -30,7 +34,11 @@ const initialState: PlanListState = {
     plans: {},
     count: -1,
     addPlanResp: false,
-    navi: 'pList'
+    navi: 'pList',
+    pickerDate: '',
+    changeDate: false,
+    dateConfrict: '',
+    targetEditDate: ''
 }
 
 export const fetchPlanList = createAsyncThunk(
@@ -70,7 +78,7 @@ export const convertTargetList = (targets: Target[]) => {
             Object.keys(t.times[area]).forEach((stadium, k) => {
                 const goumen = t.goumens[area][stadium].length;
                 t.times[area][stadium].forEach((time, l) => {
-                    itemList.push({ date: t.date, area, stadium, time, goumen})
+                    itemList.push({ area, stadium, time, goumen})
                 })
             });
         });
@@ -90,7 +98,40 @@ const PlanListSlice = createSlice({
     reducers: {
         changeNavi: (state, action) => {
             state.navi = action.payload;
-        }
+            state.addPlanResp = false;
+        },
+        changePickerDate: (state, action) => {
+            if (action.payload.mode == 'edit') {
+                // TODO コンフリクト判定
+                state.targetEditDate = action.payload.date;
+            } else {
+                state.pickerDate = action.payload.date;
+                state.changeDate = true;
+            }
+        },
+        decideTargetDateChange: (state, action) => {
+            const yesNo = action.payload;
+            if (yesNo === 'yes') {
+                state.pickerDate = state.targetEditDate;
+                state.changeDate = true;
+            }
+            state.targetEditDate = '';
+        },
+        decideDateConfrict: (state, action) => {
+            const mode = action.payload;
+            // if (mode === 'editOld') {
+            //     const conditions: Target[] = state.targets.filter(t => t.date === state.dateConfrict)
+            //     state.mode = 'edit';
+            //     state.condition = conditions[0];
+            // } else {
+            //     const targets: Target[] = state.targets.filter(t => t.date !== state.dateConfrict)
+            //     targets.push(state.condition);
+            //     state.targets = targets;
+            //     state.condition = {...condition}
+            //     state.open = false;
+            // }
+            state.dateConfrict = '';
+        },
     },
     extraReducers: builder => {
         builder.addCase(fetchPlanList.fulfilled, (state, action) => {
@@ -104,6 +145,9 @@ const PlanListSlice = createSlice({
 });
 
 export const {
-    changeNavi
+    changeNavi,
+    changePickerDate,
+    decideDateConfrict,
+    decideTargetDateChange
 } = PlanListSlice.actions;
 export default PlanListSlice.reducer;

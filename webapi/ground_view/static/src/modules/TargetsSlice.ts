@@ -1,7 +1,6 @@
-import { createSlice, Dispatch } from "@reduxjs/toolkit";
+import { createSlice } from "@reduxjs/toolkit";
 import format from 'date-fns/format';
 import addDays from 'date-fns/addDays';
-import { useAppDispatch, useAppSelector } from '../hooks';
 import {
     AREAS,
     STADIUMS_DEFAULT_SELECT,
@@ -49,11 +48,12 @@ export interface Target {
 interface TargetsState {
     open: boolean,
     mode: string,
+    preEditDate: string,
+    changeDate: boolean,
     condition: Target,
     targets: Target[],
     goumenDialog: GoumenDialog,
-    errorDialog: ErrorDialog,
-    dateConfrict: string
+    errorDialog: ErrorDialog
 }
 
 const initStadiumsOb = (): IStadium => {
@@ -87,11 +87,12 @@ const initialErrorDialog: ErrorDialog = {
 const initialState: TargetsState = {
     open: false,
     mode: 'add',
+    preEditDate: '',
+    changeDate: false,
     condition,
     targets: [],
     goumenDialog: initialGomenDialog,
     errorDialog: initialErrorDialog,
-    dateConfrict: ''
 }
 
 const countGoumens = (condition: Target) => {
@@ -175,13 +176,17 @@ const TargetsSlice = createSlice({
             state.condition.date = format(addDays(new Date(), 3), 'yyyy/MM/dd');
             state.condition.total = countGoumens(state.condition);
             state.mode = 'add';
+            state.preEditDate = '';
+            state.changeDate = false;
             state.open = true;
         },
         openEditTarget: (state, action) => {
-            const dt = action.payload.row.date;
+            const dt = action.payload;
             const conditions: Target[] = state.targets.filter(t => t.date === dt)
-            state.condition = conditions[0];
+            state.condition = conditions.length > 0 ? conditions[0] : state.condition;
             state.mode = 'edit';
+            state.preEditDate = dt;
+            state.changeDate = false;
             state.open = true;
         },
         cancelCloseTarget: (state, action) => {
@@ -191,6 +196,7 @@ const TargetsSlice = createSlice({
         changeTargetsDate: (state, action) => {
             const dt = action.payload;
             state.condition.date = dt;
+            state.changeDate = true;
         },
         changeTargetArea: (state, action) => {
             const newArea: string[] = action.payload;
@@ -226,7 +232,6 @@ const TargetsSlice = createSlice({
             newGoumens[area][stadium] = value;
 
             state.condition.goumens = newGoumens;
-            state.condition
         },
         openGomenDialog: (state, action) => {
             const { area, stadium } = action.payload;
@@ -260,34 +265,13 @@ const TargetsSlice = createSlice({
         },
         createTargetAndClose: (state, action) => {
             const target = state.condition
-
-            const conditions: Target[] = state.targets.filter(t => t.date === target.date)
-            if (state.mode !== 'edit' && conditions.length != 0) {
-                state.dateConfrict = target.date
-            } else {
-                if (state.mode === 'edit') {
-                    const targets: Target[] = state.targets.filter(t => t.date !== target.date)
-                    state.targets = targets;
-                }
-                state.targets.push(target);
-                state.condition = {...condition}
-                state.open = false;
-            }
-        },
-        decideDateConfrict: (state, action) => {
-            const mode = action.payload;
-            if (mode === 'editOld') {
-                const conditions: Target[] = state.targets.filter(t => t.date === state.dateConfrict)
-                state.mode = 'edit';
-                state.condition = conditions[0];
-            } else {
-                const targets: Target[] = state.targets.filter(t => t.date !== state.dateConfrict)
-                targets.push(state.condition);
+            if (state.mode === 'edit') {
+                const targets: Target[] = state.targets.filter(t => t.date !== state.preEditDate)
                 state.targets = targets;
-                state.condition = {...condition}
-                state.open = false;
             }
-            state.dateConfrict = '';
+            state.targets.push(target);
+            state.condition = {...condition}
+            state.open = false;
         },
         openErrorDialog: (state, action) => {
             const { title, message } = action.payload;
@@ -300,6 +284,14 @@ const TargetsSlice = createSlice({
         },
         clearAllTarget: (state, action) => {
             state.targets = []
+        },
+        allTargetDateChange: (state, action) => {
+            const dt = action.payload;
+            const newTargets = state.targets.map(t => {
+                t.date = dt;
+                return t;
+            });
+            state.targets = newTargets;
         },
         updateTotal: (state, action) => {
             state.condition.total = countGoumens(state.condition);
@@ -324,5 +316,5 @@ export const {
     closeErrorDialog,
     createTargetAndClose,
     clearAllTarget,
-    decideDateConfrict } = TargetsSlice.actions;
+    allTargetDateChange} = TargetsSlice.actions;
 export default TargetsSlice.reducer;

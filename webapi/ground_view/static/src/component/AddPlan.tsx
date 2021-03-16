@@ -2,22 +2,38 @@ import React, { useEffect } from 'react';
 import { useHistory } from 'react-router-dom';
 import { useAppDispatch, useAppSelector } from '../hooks';
 import { makeStyles, createStyles, Theme } from '@material-ui/core/styles';
-import { Grid, Paper, Typography } from '@material-ui/core';
+import { Grid, Paper, Typography, Badge } from '@material-ui/core';
 import Button from '@material-ui/core/Button';
 import GroupAddIcon from '@material-ui/icons/GroupAdd';
 import NoteAddIcon from '@material-ui/icons/NoteAdd';
 import DeleteForeverIcon from '@material-ui/icons/DeleteForever';
 import Edit from '@material-ui/icons/Edit';
 import AddTarget from './AddTarget';
-import { initNewTarget, cancelCloseTarget } from '../modules/TargetsSlice';
 import { green } from '@material-ui/core/colors';
 import { createMuiTheme, ThemeProvider } from '@material-ui/core/styles';
 import MaterialTable, { MTableToolbar } from 'material-table';
 import { TableIcons, TableLocalization } from './TableConst';
-import { clearAllTarget, openEditTarget } from '../modules/TargetsSlice';
-import { submitPlan, convertTargetList, convertTargetListForSubmit } from '../modules/PlanListSlice';
+import {
+    initNewTarget,
+    cancelCloseTarget,
+    clearAllTarget, 
+    openEditTarget,
+    allTargetDateChange } from '../modules/TargetsSlice';
+import { 
+    changeNavi,
+    submitPlan,
+    convertTargetList,
+    convertTargetListForSubmit,
+    changePickerDate,
+    decideDateConfrict,
+    decideTargetDateChange} from '../modules/PlanListSlice';
 import { SUB_DOMAIN } from '../modules/Constants';
-import { changeNavi } from '../modules/PlanListSlice';
+import { MaterialUiPickersDate } from '@material-ui/pickers/typings/date';
+import { DatePicker } from '@material-ui/pickers';
+import addDays from 'date-fns/addDays';
+import addMonths from 'date-fns/addMonths';
+import format from 'date-fns/format';
+import { ConfirmDialog } from './Dialogs';
 
 
 const useStyles = makeStyles((theme: Theme) => 
@@ -25,6 +41,10 @@ const useStyles = makeStyles((theme: Theme) =>
         paper: {
             padding: theme.spacing(2),
             margin: 'auto'
+        },
+        hrMargin: {
+            marginTop: '10px',
+            marginBottom: '10px'
         },
         listRoot: {
             width: '100%',
@@ -48,11 +68,20 @@ const AddPlan: React.FC<any> = (props) => {
     const history = useHistory();
     const css = useStyles();
     
+    const dt = new Date();
+    const startDay = addDays(dt, 3)
+    const endDay = addMonths(dt, 2)
+    
+    const targetEditDate = useAppSelector(st => st.PlanListSlice.targetEditDate);
+    const pickerDate = useAppSelector(st => st.PlanListSlice.pickerDate) || format(startDay, 'yyyy/MM/dd');
+    const dateConfrict = useAppSelector(st => st.PlanListSlice.dateConfrict);
     const addPlanResp = useAppSelector(st => st.PlanListSlice.addPlanResp);
     const open = useAppSelector(st => st.TargetsSlice.open);
     let targets = useAppSelector(st => st.TargetsSlice.targets);
     targets = targets.slice().sort((a, b) => (a.date === b.date) ? 0 : (a.date < b.date) ? -1 : 1);
     const itemList = convertTargetList(targets);
+    const mode = itemList.length === 0 ? 'add': 'edit';
+    const strMode = mode === 'add' ? '追加': '編集'
 
     useEffect(() => {
         if (addPlanResp) {
@@ -62,7 +91,12 @@ const AddPlan: React.FC<any> = (props) => {
     }, [addPlanResp, dispatch])
 
     const handleClickOpen = () => {
-        dispatch(initNewTarget(['蒲田']))
+        dispatch(changePickerDate({date: pickerDate }));
+        if (mode === 'add') {
+            dispatch(initNewTarget(['蒲田']));
+        } else {
+            dispatch(openEditTarget(pickerDate));
+        }
     }
 
     const handleClickClose = () => {
@@ -78,7 +112,23 @@ const AddPlan: React.FC<any> = (props) => {
     }
 
     const handleClickRowEdit = (row: any) => {
-        dispatch(openEditTarget({row}))
+        dispatch(openEditTarget(pickerDate))
+    }
+
+    const handleDateChange = (dt: MaterialUiPickersDate) => {
+        const strDate = format(dt as Date, 'yyyy/MM/dd')
+        dispatch(changePickerDate({date: strDate, mode }));
+    }
+
+    const handleDateConfrict = (mode: string) => () => {
+        dispatch(decideDateConfrict(mode))
+    }
+
+    const handleTargetDateChangeConfirm = (yesNo: string) => () => {
+        if (yesNo === 'yes') {
+            dispatch(allTargetDateChange(targetEditDate));
+        }
+        dispatch(decideTargetDateChange(yesNo));
     }
 
     const cellStyle = { 
@@ -93,7 +143,17 @@ const AddPlan: React.FC<any> = (props) => {
                     <Typography variant="h5">プランの作成</Typography>
                 </Grid>
                 <Grid item={true}>
-                    <hr />
+                    <DatePicker
+                        minDate={startDay} maxDate={endDay}
+                        value={pickerDate} label="対象日" format="yyyy年MM月dd日(eee)"
+                        onChange={dt => handleDateChange(dt)} 
+                        renderDay ={(day, selectedDate, isInCurrentMonth, dayComponent) => {
+                            return <Badge color="secondary" variant="dot" >{dayComponent}</Badge>
+                        }}
+                    />
+                </Grid>
+                <Grid item={true}>
+                    <hr className={css.hrMargin}/>
                 </Grid>
                 <Grid item={true} container={true} justify="space-between">
                     <Grid item={true}>
@@ -104,7 +164,6 @@ const AddPlan: React.FC<any> = (props) => {
                     <MaterialTable
                         title="ターゲット一覧"
                         columns={[
-                            { title: '日付', field: 'date', cellStyle },
                             { title: 'エリア', field: 'area', cellStyle },
                             { title: '球場', field: 'stadium', cellStyle },
                             { title: '時間帯', field: 'time', cellStyle },
@@ -117,7 +176,7 @@ const AddPlan: React.FC<any> = (props) => {
                                     <div className={css.tableHeaderDiv}>
                                         <ThemeProvider theme={theme}>
                                             <Button variant="contained" color="primary" startIcon={<GroupAddIcon />} onClick={handleClickOpen}>
-                                                ターゲットの追加
+                                                ターゲットの{strMode}
                                             </Button>
                                         </ThemeProvider>
                                         <Button variant="contained" startIcon={<DeleteForeverIcon />} disabled={targets.length == 0} className={css.btnDelete} onClick={handleClickTargetDelete}>
@@ -138,11 +197,32 @@ const AddPlan: React.FC<any> = (props) => {
                         localization={TableLocalization}
                         data={itemList}
                         options={{
+                            pageSize: 10,
                             padding: 'dense'
                         }}
                     />
                 </Grid>
             </Grid>
+            <ConfirmDialog
+                open={(dateConfrict !== '')}
+                title="日付重複"
+                message={`${dateConfrict}のプランがすでに追加されています。`}
+                btnDirection="column"
+                txtBtn1="登録済みデータを優先して編集モードに入る"
+                txtBtn2="登録済みデータを破棄して現在の内容で上書く"
+                handleClick1={handleDateConfrict("editOld")}
+                handleClick2={handleDateConfrict("forceUpdate")}
+            />
+            <ConfirmDialog
+                open={targetEditDate !== ''}
+                title="日付重複"
+                message={`現在のターゲットの日付を変更して良いですか？`}
+                btnDirection="column"
+                txtBtn1="はい"
+                txtBtn2="キャンセル"
+                handleClick1={handleTargetDateChangeConfirm('yes')}
+                handleClick2={handleTargetDateChangeConfirm('no')}
+            />
         </Paper>
     );
 }
