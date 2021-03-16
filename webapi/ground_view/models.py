@@ -30,6 +30,11 @@ class ReservationPlan(models.Model):
     target_cnt = models.IntegerField('ターゲット数', validators=[MaxLengthValidator(3)], default=0)
     reserved_cnt = models.IntegerField('予約済み数', validators=[MaxLengthValidator(3)], default=0)
 
+    @staticmethod
+    def convert_request_to_plan(items):
+        # TargetRowHolder(items)
+        pass
+
 
 class ReservationTarget(models.Model):
     plan = models.ForeignKey(ReservationPlan, on_delete=models.CASCADE, null=True)

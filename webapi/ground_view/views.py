@@ -3,6 +3,7 @@ from django.http.response import JsonResponse
 from django.views.decorators.csrf import ensure_csrf_cookie
 from ground_view.models import SystemCondition, ReservationPlan
 from itertools import groupby
+import json
 
 # Create your views here.
 
@@ -36,3 +37,10 @@ def get_plans(req):
             key=lambda p: p['ymd_range'], reverse=True)
 
     return JsonResponse(ret)
+
+
+@ensure_csrf_cookie
+def save_plan(req):
+    data = json.loads(req.body.decode('utf-8'))
+    ReservationPlan.convert_request_to_plan(data)
+    print(data)
