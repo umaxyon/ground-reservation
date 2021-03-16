@@ -61,11 +61,6 @@ class Scraper:
         await btns[num].click()
         await self.page.waitForNavigation()
 
-    async def click_to_menu_button(self):
-        btn_menu = await self.page.J('body > table:first-child a')
-        await btn_menu.click()
-        await self.page.waitForNavigation()
-
     async def login(self):
         btn = await self.page.J('form > div > table:last-child a')
         await btn.click()
@@ -76,6 +71,12 @@ class Scraper:
         login_btn = await self.page.J('input[name=PWD] + div > a')
         await login_btn.click()
         await self.page.waitForNavigation()
+
+    async def click_to_menu_button(self):
+        btn_menu = await self.page.J('body > table:first-child a')
+        await btn_menu.click()
+        await self.page.waitForNavigation()
+
 
     async def get_ground_info_list_in_month(self, cal):
         ret = []

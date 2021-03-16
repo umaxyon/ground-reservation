@@ -1,15 +1,17 @@
-name_map = {
-    '昭和島運動場野球場': '昭和島運動場',
-    '平和島公園野球場': '平和島公園',
-    '東調布公園': '東調布公園',
-    '多摩川緑地野球場': '多摩川緑地',
-    '多摩川六郷橋緑地野球場': '六郷橋緑地',
-    '多摩川ガス橋緑地野球場': 'ガス橋緑地',
-    '多摩川大師橋緑地野球場': '大師橋緑地'
-}
+from Model import Stadium
+
+# name_map = {
+#     '昭和島運動場野球場': '昭和島運動場',
+#     '平和島公園野球場': '平和島公園',
+#     '東調布公園': '東調布公園',
+#     '多摩川緑地野球場': '多摩川緑地',
+#     '多摩川六郷橋緑地野球場': '六郷橋緑地',
+#     '多摩川ガス橋緑地野球場': 'ガス橋緑地',
+#     '多摩川大師橋緑地野球場': '大師橋緑地'
+# }
 
 unsupported = {
-    'ガス橋緑地_5': 'selectboxに軟式野球が無い'
+    'ｶﾞｽ橋緑地_5': 'selectboxに軟式野球が無い'
 }
 
 normal_time_table = ['07-09', '09-11', '11-13', '13-15', '15-17']
@@ -30,7 +32,8 @@ class GrandInfo:
         title = await self.page.evaluate('elm => elm.innerHTML', td)
         ground_name = [v.strip() for v in title.split('<br>')][1]
         buf = ground_name.split('_')
-        name = name_map[buf[0]] if buf[0] in name_map else buf[0]
+        name = Stadium.full_nm_of(buf[0]) or buf[0]
+        # name = name_map[buf[0]] if buf[0] in name_map else buf[0]
         if len(buf) == 2:
             return name, buf[1].translate(ZEN_HAN_TRANS).replace('号面', '')
         else:
