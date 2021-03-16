@@ -1,8 +1,10 @@
 import * as Moxios from 'moxios';
 import data_system_condition from './serverdata/data_system_condition';
 import data_get_plans from './serverdata/data_get_plans';
+import { IS_LOCAL } from '../modules/Constants';
 
-const IS_MOCK = true;
+
+const IS_MOCK = IS_LOCAL;
 const STUB_RESPONSE_MAP: {[key: string]: any} = {}
 
 export const installStubRequestIfNeeded = (url: string) => {

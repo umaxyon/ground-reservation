@@ -1,9 +1,10 @@
 import { createSlice, Dispatch } from "@reduxjs/toolkit";
 import format from 'date-fns/format';
 import addDays from 'date-fns/addDays';
+import { useAppDispatch, useAppSelector } from '../hooks';
 import {
     AREAS,
-    STADIUMS, STADIUMS_DEFAULT_SELECT,
+    STADIUMS_DEFAULT_SELECT,
     TIME_RANGES_DEFAULT_SELECT,
     GOUMENS_DEFAULT_SELECT
 } from "./Constants";
@@ -305,11 +306,6 @@ const TargetsSlice = createSlice({
         }
     }
 });
-
-// export const changeTargetAreaWithUpdateTotal = (val: any) => async (dispatch: Dispatch) => {
-//     await dispatch(TargetsSlice.actions.chageTargetArea(val));
-//     await dispatch(TargetsSlice.actions.updateTotal({}));
-// }
 
 export const {
     initNewTarget,
