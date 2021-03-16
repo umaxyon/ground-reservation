@@ -12,13 +12,15 @@ const PlanList: React.FC<any> = () => {
         dispatch(fetchPlanList())
     }, [dispatch]);
 
-    const plans = useAppSelector(state => state.PlanListSlice.plans)
+    const st = useAppSelector(state => state.PlanListSlice)
 
     let ret;
-    if (isEmpty(plans)) {
+    if (isEmpty(st.plans) && st.count < 0) {
         ret = <div>loading...</div>;
+    } else if(st.count === 0) {
+        ret = <div>プランがありません</div>
     } else {
-        const watchList = plans.監視中
+        const watchList = st.plans.監視中
         ret = []
         for (const k in watchList) {
             ret.push(<PlanRow key={`plan_${k}`} row={k} data={new Plan(watchList[k])} />)

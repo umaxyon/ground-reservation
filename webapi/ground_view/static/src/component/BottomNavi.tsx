@@ -1,4 +1,5 @@
 import React from 'react';
+import { useAppDispatch, useAppSelector } from '../hooks';
 import { selector } from 'recoil';
 import { BottomNavigation, BottomNavigationAction }from '@material-ui/core';
 import SportsBaseballOutlinedIcon from '@material-ui/icons/SportsBaseballOutlined';
@@ -6,6 +7,7 @@ import SettingsApplicationsOutlinedIcon from '@material-ui/icons/SettingsApplica
 import AddCircleOutlineIcon from '@material-ui/icons/AddCircleOutline';
 import { useHistory } from 'react-router-dom';
 import { SUB_DOMAIN } from '../modules/Constants';
+import { changeNavi } from '../modules/PlanListSlice';
 
 export const bottomNaviHeight = selector({
     key: 'botomNaviHeight',
@@ -18,13 +20,14 @@ export const bottomNaviHeight = selector({
 
 
 const BottomNavi: React.FC<any> = () => {
-    const [value, setValue] = React.useState('pList');
+    const dispatch = useAppDispatch();
     const handleChange = (e: React.ChangeEvent<{}>, newVal: string) => {
-        setValue(newVal);
+        dispatch(changeNavi(newVal));
     }
+    const navi = useAppSelector(st => st.PlanListSlice.navi)
     const { push } = useHistory();
     return (
-        <BottomNavigation value={value} onChange={handleChange}>
+        <BottomNavigation value={navi} onChange={handleChange}>
             <BottomNavigationAction
                 label="プラン一覧"
                 value="pList"
