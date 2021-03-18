@@ -1,13 +1,20 @@
-import { configureStore } from '@reduxjs/toolkit';
+import { configureStore, getDefaultMiddleware } from '@reduxjs/toolkit';
 import PlanListSlice from './modules/PlanListSlice';
 import TargetsSlice from './modules/TargetsSlice';
 
+
+const logger = (store: { getState: () => any; }) => (next: (arg0: any) => void) => (action: any) => {
+    console.log("before: %O", store.getState());
+    next(action);
+    console.log("after %O", store.getState());
+};
 
 const store = configureStore({
     reducer: {
         PlanListSlice,
         TargetsSlice
-    }
+    },
+    // middleware: (getDefaultMiddleware) => getDefaultMiddleware().concat(logger),
 });
 
 export default store;
