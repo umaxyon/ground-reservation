@@ -84,7 +84,7 @@ class Area(Enum):
         return [area for area in Area.members() if area.nm in target_areas]
 
     OOMORI = (0, '大森', [Stadium.SHOWAJIMA, Stadium.HEIWAJIMA])
-    OOTA = (1, '太田スタジアム', [Stadium.OOTA_ST])
+    OOTA = (1, '大田ST', [Stadium.OOTA_ST])
     CHOFU = (2, '調布', [Stadium.HIGASHI_CHOFU])
     KOUJIYA_HANEDA = (3, '糀谷・羽田', [Stadium.HAGINAKA])
     KAMATA = (4, '蒲田', [Stadium.TAMAGAWA, Stadium.ROKUGOBASHI, Stadium.TAISHIBASHI, Stadium.GASUBASHI])
@@ -113,36 +113,36 @@ class CalDay:
 
 class TargetRowHolder:
     def __init__(self, post_row):
-        y, m, d = post_row['date'].split('/')
+        y = post_row['date'][0:4]
+        m = post_row['date'][4:6]
+        d = post_row['date'][6:]
 
         stadium = Stadium.nm_of(post_row['stadium'])
 
         self.status = '未予約'
         self.ym = f"{y}{m}"
         self.dt = d
+        self.ymd = f"{y}{m}{d}"
         self.week_day = get_weekday(y, m, d)
         self.area = post_row['area']
         self.gname = stadium.nm
         self.timebox = stadium.timebox().index(post_row['time'])
         self.goumens = post_row['goumen'] or []
-
-    def ymd(self):
-        return f"{self.ym}{self.dt}"
+        self.reserve_gno_csv = ""
 
     def count(self):
         return len(self.goumens)
 
 
 class PlanTargetHolder:
-    ymd_min = ""
-    ymd_max = ""
+    ymd = ""
     areas = set([])
     targets: List[TargetRowHolder] = []
 
     def __init__(self, items):
         for r in items:
             t = TargetRowHolder(r)
-            self.set_ymd(t.ymd())
+            self.ymd = t.ymd
             self.areas.add(t.area)
             self.week_day = t.week_day
             self.targets.append(t)
@@ -150,9 +150,17 @@ class PlanTargetHolder:
     def target_count(self):
         return sum(t.count() for t in self.targets)
 
-    def set_ymd(self, ymd):
-        self.ymd_min = ymd if self.ymd_min == "" else min(self.ymd_min, ymd)
-        self.ymd_max = max(self.ymd_max, ymd)
+    def ym(self):
+        return int(self.ymd[0:6])
+
+    def dt(self):
+        return int(self.ymd[6:])
+
+    def apply_reserve_gno_csv(self, old_targets):
+        for old_t in old_targets:
+            for t in self.targets:
+                if t.area == old_t.area and t.gname == old_t.gname and t.timebox == old_t.timebox:
+                    t.reserve_gno_csv = old_t.reserve_gno_csv
 
 
 class ReservationModel:

@@ -1,6 +1,5 @@
 from django.db import models
 from django.core.validators import MaxLengthValidator, RegexValidator
-
 from .batch.Share import PlanTargetHolder
 
 
@@ -37,7 +36,7 @@ class ReservationPlan(models.Model):
         plan = ReservationPlan(
             status='監視中',
             area_csv=','.join(dat.areas),
-            ymd_range=f"{dat.ymd_min}-{dat.ymd_max}",
+            ymd_range=dat.ymd,
             reserved_cnt=0,
             target_cnt=dat.target_count()
         )
@@ -76,7 +75,11 @@ class ReservationTarget(models.Model):
             area=th.area,
             gname=th.gname,
             timebox=th.timebox,
-            reserve_gno_csv='',
+            reserve_gno_csv=th.reserve_gno_csv,
             gno_csv=','.join(th.goumens)
         ) for th in dat.targets]
         ReservationTarget.objects.bulk_create(targets)
+
+    def __str__(self):
+        return (f"{self.status} {self.ym}{self.dt} {self.plan_id} {self.area} {self.gname} {self.timebox} "
+                f"{self.gno_csv} {self.reserve_gno_csv}")
