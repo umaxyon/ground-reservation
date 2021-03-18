@@ -2,6 +2,7 @@ import React from 'react';
 import { Container, CssBaseline } from '@material-ui/core';
 import PlanList from './component/PlanList';
 import AddPlan from './component/AddPlan';
+import PlanDetail from './component/PlanDetail';
 import ScrollDiv from './component/ScrollDiv';
 import BottomNavi from './component/BottomNavi';
 import WindowResizeHook from './hook/WindowResizeHook';
@@ -19,7 +20,7 @@ const App: React.FC<any> = () => {
                         <Switch>
                             <Route exact={true} path={`/${SUB_DOMAIN}/`} component={PlanList} />
                             <Route exact={true} path={`/${SUB_DOMAIN}/add_plan`} component={AddPlan} />
-                            {/* <Route exact={true} path={"/${SUB_DOMAIN}/edit_plan/:planId"} component={() => <div>edit_plan</div>} /> */}
+                            <Route exact={true} path={`/${SUB_DOMAIN}/plan_detail/:planId`} component={PlanDetail} />
                             <Route exact={true} path={`/${SUB_DOMAIN}/settings`} component={() => <div>settings</div>} />
                         </Switch>
                     </ScrollDiv>

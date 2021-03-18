@@ -23,6 +23,7 @@ interface PlanListState {
     loading: 'idle' | 'pending' | 'succeeded' | 'failed',
     first: boolean,
     plans: PlanType[],
+    detail: PlanType,
     count: number,
     addPlanResp: boolean,
     navi: 'pList' | 'addPlan' | 'settings',
@@ -33,10 +34,20 @@ interface PlanListState {
     targetEditDate: string
 }
 
+const initialPlantype: PlanType = {
+    id: '',
+    status: '',
+    ymd_range: '',
+    area_csv: '',
+    reserved_cnt: -1,
+    target_cnt: -1
+}
+
 const initialState: PlanListState = {
     loading: 'idle',
     first: true,
     plans: [],
+    detail: initialPlantype,
     count: -1,
     addPlanResp: false,
     navi: 'pList',
@@ -85,14 +96,30 @@ export const fetchPlanList = createAsyncThunk(
     }
 )
 
+export const loadPlanById = createAsyncThunk(
+    'planList/loadPlanById',
+    async (planId: string, thunk) => {
+        return await ajax({ url: "/ground_view/get_plan_by_id/", params: { planId }}).then((resp: any) => resp);
+    }
+)
+
+export const submitWatchChange = createAsyncThunk(
+    'planList/submitWatchChange',
+    async (params: any, thunk) => {
+        return await ajax({ url: "/ground_view/watch_change/", params }).then((resp: any) => resp);
+    }
+)
+
 export const getPlanFromDate = createAsyncThunk<any, any, { dispatch: AppDispatch, state: RootState }>(
     'planList/getPlanFromDate',
-    async (date: string, thunk) => {
+    async (params: any, thunk) => {
+        const date = params.date;
         const ret = await ajax({ url: "/ground_view/get_plan/", params: { date }}).then((resp: any) => resp);
         if (isEmpty(ret)) {
             thunk.dispatch(clearAllTarget({}));
             thunk.dispatch(changeMode('add'));
         }
+        ret.from = params.from;
         return ret;
     }
 )
@@ -109,7 +136,7 @@ export const submitPlan = createAsyncThunk<any, any, { dispatch: AppDispatch, st
 
 export const changePickerDateConfirm = (date: string) => async (dispatch: AppDispatch, getState: any) => {
     dispatch(PlanListSlice.actions.setPickerDateTmp(date));
-    dispatch(getPlanFromDate(date));
+    dispatch(getPlanFromDate({ date, from: "changePickerDateConfirm" }));
 }
 
 
@@ -149,6 +176,10 @@ const PlanListSlice = createSlice({
                 state.changeDate = true;
             }
         },
+        callbackPlanDetailOpenEdit: (state, action) => {
+            state.pickerDate = action.payload.ymd_range;
+            state.pickerDateTmp = action.payload.ymd_range;
+        },
         planDateInit: (state, action) => {
             state.pickerDate = state.pickerDateTmp;
             state.pickerDateTmp = "";
@@ -157,6 +188,12 @@ const PlanListSlice = createSlice({
         },
         firstEnd: (state, action) => {
             state.first = false;
+        },
+        callbackLoadPlanById: (state, action) => {
+            state.detail = action.payload;
+        },
+        callbackSubmitWatchChange: (state, action) => {
+            state.detail.status = action.payload.status;
         }
     },
     extraReducers: builder => {
@@ -165,13 +202,23 @@ const PlanListSlice = createSlice({
             state.count = action.payload.count;
         });
         builder.addCase(getPlanFromDate.fulfilled, (state, action) => {
-            PlanListSlice.caseReducers.callbackDateCheck(state, action);
+            if (action.payload.from === 'changePickerDateConfirm') {
+                PlanListSlice.caseReducers.callbackDateCheck(state, action);
+            } else {
+                PlanListSlice.caseReducers.callbackPlanDetailOpenEdit(state, action);
+            }
         });
         builder.addCase(submitPlan.fulfilled, (state, action) => {
             state.pickerDate = "";
             state.dateConfrict = "";
             state.targetEditDate = "";
             state.addPlanResp = true;
+        });
+        builder.addCase(loadPlanById.fulfilled, (state, action) => {
+            PlanListSlice.caseReducers.callbackLoadPlanById(state, action);
+        });
+        builder.addCase(submitWatchChange.fulfilled, (state, action) => {
+            PlanListSlice.caseReducers.callbackSubmitWatchChange(state, action);
         });
     }
 });

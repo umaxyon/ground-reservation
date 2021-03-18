@@ -103,7 +103,7 @@ const PlanRow: React.FC<any> = (props) => {
                         <Grid container={true} direction="column" alignItems="stretch" spacing={1}>
                             <Grid item={true} className={css.contentGrid}>
                                 <div>
-                                    球場:  <span className={css.stadiumSpan}>{plan.dat.area_csv}</span>
+                                    エリア:  <span className={css.stadiumSpan}>{plan.dat.area_csv}</span>
                                 </div>
                             </Grid>
                             <Grid item={true} container={true} direction="row" justify="flex-start" spacing={2} className={css.textLineGrid}>
@@ -119,7 +119,7 @@ const PlanRow: React.FC<any> = (props) => {
                 </Grid>
                 <Grid item={true}>
                     <CardContent className={css.rightButton}>
-                        <IconButton onClick={() => push(`/${SUB_DOMAIN}/edit_plan/${plan.id()}`)} className={css.vcenter}>
+                        <IconButton onClick={() => push(`/${SUB_DOMAIN}/plan_detail/${plan.id()}`)} className={css.vcenter}>
                             <ArrowForwardIosIcon />
                         </IconButton>
                     </CardContent>
