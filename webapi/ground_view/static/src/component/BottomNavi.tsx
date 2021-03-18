@@ -34,7 +34,7 @@ const BottomNavi: React.FC<any> = () => {
                 icon={<SportsBaseballOutlinedIcon />}
                 onClick={() => push(`/${SUB_DOMAIN}/`)}/>
             <BottomNavigationAction
-                label="プラン追加" 
+                label="プラン作成" 
                 value="add_plan" icon={<AddCircleOutlineIcon />} 
                 onClick={() => push(`/${SUB_DOMAIN}/add_plan`)} />
             <BottomNavigationAction
