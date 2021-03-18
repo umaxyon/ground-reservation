@@ -93,7 +93,7 @@ const AddTarget: React.FC<any> = (props) => {
     const mode = useAppSelector(st => st.TargetsSlice.mode);
     const strMode = (mode === 'edit') ? '編集' : '追加';
     const pickerDate = useAppSelector(st => st.PlanListSlice.pickerDate);
-    const pDate = (pickerDate) ? parse(pickerDate, 'yyyy/MM/dd', dt) : addDays(dt, 3);
+    const pDate = (pickerDate) ? parse(pickerDate, 'yyyyMMdd', dt) : addDays(dt, 3);
 
     const selectedAreas = useAppSelector(st => st.TargetsSlice.condition.areas) || [];
     const selectedStadiumOb = useAppSelector(st => st.TargetsSlice.condition.stadiums);
