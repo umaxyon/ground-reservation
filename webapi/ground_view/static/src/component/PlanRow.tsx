@@ -5,6 +5,7 @@ import { PlanType } from '../modules/PlanListSlice';
 import { formatYmd } from '../utils';
 import ContactlessIcon from '@material-ui/icons/Contactless';
 import ArrowForwardIosIcon from '@material-ui/icons/ArrowForwardIos';
+import RemoveCircleOutlineIcon from '@material-ui/icons/RemoveCircleOutline';
 import IconButton from '@material-ui/core/IconButton';
 import { useHistory } from 'react-router-dom';
 import { SUB_DOMAIN } from '../modules/Constants';
@@ -84,6 +85,11 @@ const PlanRow: React.FC<any> = (props) => {
     const plan = props.data;
     const css = createCss();
     const { push } = useHistory();
+
+    const statusBadge = (plan.dat.status === '監視中') ?
+        <Chip size="small" avatar={<ContactlessIcon />} color="primary" label={plan.dat.status} />  :
+        <Chip size="small" avatar={<RemoveCircleOutlineIcon />} label={plan.dat.status} /> 
+
     return (
         <Card key={`plan_${props.row}_card`} className={css.root}>
             <Grid container={true}>
@@ -102,7 +108,7 @@ const PlanRow: React.FC<any> = (props) => {
                             </Grid>
                             <Grid item={true} container={true} direction="row" justify="flex-start" spacing={2} className={css.textLineGrid}>
                                 <Grid item={true} className={css.vcenter}>
-                                    <Chip size="small" avatar={<ContactlessIcon />} color="primary" label={plan.dat.status} />  
+                                    {statusBadge}
                                 </Grid>
                                 <Grid item={true} className={css.countText}>
                                     予約済み: {plan.dat.reserved_cnt}  /  対象: {plan.dat.target_cnt}

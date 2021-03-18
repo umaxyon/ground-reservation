@@ -81,7 +81,7 @@ const AddPlan: React.FC<any> = (props) => {
     const ts = useAppSelector(st => st.TargetsSlice);
     const ps = useAppSelector(st => st.PlanListSlice);
 
-    const plans = Object.keys(ps.plans).map<string[]>(k => ps.plans[k].map<string>(p => p.ymd_range));
+    const plans = ps.plans.map(p => p.ymd_range)
     const planedDays = Array.from(new Set(([] as string[]).concat(...plans)))
     let pickerDate = ps.pickerDate || format(startDay, 'yyyyMMdd');
 

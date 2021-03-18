@@ -20,10 +20,10 @@ const PlanList: React.FC<any> = () => {
     } else if(st.count === 0) {
         ret = <div>プランがありません</div>
     } else {
-        const watchList = st.plans.監視中
+        // const watchList = st.plans.監視中
         ret = []
-        for (const k in watchList) {
-            ret.push(<PlanRow key={`plan_${k}`} row={k} data={new Plan(watchList[k])} />)
+        for (const k in st.plans) {
+            ret.push(<PlanRow key={`plan_${k}`} row={k} data={new Plan(st.plans[k])} />)
         }
     }
 

@@ -2,6 +2,29 @@ import datetime as dt
 from enum import Enum
 from typing import List
 
+
+class PlanStatus(Enum):
+    ON = (0, '監視中')
+    OFF = (1, '待機中')
+
+    def __init__(self, sid, nm):
+        self.sid = sid
+        self.nm = nm
+
+    @staticmethod
+    def members():
+        return [*PlanStatus.__members__.values()]
+
+    @staticmethod
+    def nm_of(nm):
+        v = [v for v in PlanStatus.members() if v.nm == nm]
+        return v[0] if len(v) == 1 else None
+
+    @staticmethod
+    def of(watch_status):
+        return PlanStatus.ON if watch_status == 'true' else PlanStatus.OFF
+
+
 time_ptn = {
     1: ['07-09', '09-11', '11-13', '13-15', '15-17'],
     2: ['07-09', '09-11', '11-13', '13-15', '15-17', '17-19', '19-21'],
@@ -139,13 +162,14 @@ class PlanTargetHolder:
     areas = set([])
     targets: List[TargetRowHolder] = []
 
-    def __init__(self, items):
+    def __init__(self, items, plan_status):
         for r in items:
             t = TargetRowHolder(r)
             self.ymd = t.ymd
             self.areas.add(t.area)
             self.week_day = t.week_day
             self.targets.append(t)
+            self.plan_status = plan_status
 
     def target_count(self):
         return sum(t.count() for t in self.targets)

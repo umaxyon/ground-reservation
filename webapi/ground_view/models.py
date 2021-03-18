@@ -34,7 +34,7 @@ class ReservationPlan(models.Model):
     @staticmethod
     def save_plan(dat: PlanTargetHolder):
         plan = ReservationPlan(
-            status='監視中',
+            status=dat.plan_status.nm,
             area_csv=','.join(dat.areas),
             ymd_range=dat.ymd,
             reserved_cnt=0,

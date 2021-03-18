@@ -22,7 +22,7 @@ export type PlanListType = {
 interface PlanListState {
     loading: 'idle' | 'pending' | 'succeeded' | 'failed',
     first: boolean,
-    plans: PlanListType,
+    plans: PlanType[],
     count: number,
     addPlanResp: boolean,
     navi: 'pList' | 'addPlan' | 'settings',
@@ -36,7 +36,7 @@ interface PlanListState {
 const initialState: PlanListState = {
     loading: 'idle',
     first: true,
-    plans: {},
+    plans: [],
     count: -1,
     addPlanResp: false,
     navi: 'pList',
@@ -100,8 +100,8 @@ export const getPlanFromDate = createAsyncThunk<any, any, { dispatch: AppDispatc
 export const submitPlan = createAsyncThunk<any, any, { dispatch: AppDispatch, state: RootState }>(
     'planList/submitPlan',
     async (param: any, thunk) => {
-        const mode = thunk.getState().TargetsSlice.mode;
-        const ret = await ajax({ url: "/ground_view/save_plan/", method: 'post', data: param.itemList, params: { mode }}).then((resp: any) => resp);
+        const { mode, watchStart } = thunk.getState().TargetsSlice;
+        const ret = await ajax({ url: "/ground_view/save_plan/", method: 'post', data: param.itemList, params: { mode, watchStart }}).then((resp: any) => resp);
         thunk.dispatch(clearAllTarget({}));
         return ret;
     }
