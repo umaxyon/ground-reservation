@@ -2,3 +2,10 @@ Mysql用のdocker-compose
 
 サーバーにMysqlはインストールされているが、databaseのデフォルト文字コードがlaten1で作成されており、
 Djangoのmigrateでlaten1のテーブルが出来てしまうのでdockerで当アプリ専用のMysqlを上げることにした。
+
+* docker上のmysqlのホストIPの調べ方
+
+sudo docker inspect db_db_1 | grep IPAddress
+
+※「db_db_1」は「 docker ps 」で調べたコンテナ名
+
