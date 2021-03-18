@@ -35,7 +35,9 @@ def get_plans(req):
                 'id': p.id,
                 'ymd_range': p.ymd_range,
                 'status': p.status,
-                'area_csv': p.area_csv
+                'area_csv': p.area_csv,
+                'reserved_cnt': p.reserved_cnt,
+                'target_cnt': p.target_cnt
             } for p in plans],
             key=lambda p: p['ymd_range'], reverse=True)
     ret['plans'] = data
