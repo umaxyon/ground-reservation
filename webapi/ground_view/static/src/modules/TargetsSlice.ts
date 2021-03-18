@@ -1,12 +1,15 @@
-import { createSlice } from "@reduxjs/toolkit";
-import format from 'date-fns/format';
-import addDays from 'date-fns/addDays';
+import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
+import ajax from '../utils';
+import { AppDispatch, RootState } from '../store';
 import {
     AREAS,
     STADIUMS_DEFAULT_SELECT,
     TIME_RANGES_DEFAULT_SELECT,
     GOUMENS_DEFAULT_SELECT
 } from "./Constants";
+import {
+    planDateInit
+} from "./PlanListSlice";
 
 export interface ITimes {
     [key: string]: {
@@ -48,8 +51,8 @@ export interface Target {
 interface TargetsState {
     open: boolean,
     mode: string,
+    watchStart: boolean,
     preEditDate: string,
-    changeDate: boolean,
     condition: Target,
     targets: Target[],
     goumenDialog: GoumenDialog,
@@ -87,8 +90,8 @@ const initialErrorDialog: ErrorDialog = {
 const initialState: TargetsState = {
     open: false,
     mode: 'add',
+    watchStart: false,
     preEditDate: '',
-    changeDate: false,
     condition,
     targets: [],
     goumenDialog: initialGomenDialog,
@@ -108,7 +111,8 @@ const countGoumens = (condition: Target) => {
 }
 
 const getAddedDiffListForStadium = (state: any, area: string, newStadiums: string[]): string[] => {
-    return newStadiums.filter(k => ! (state.condition.stadiums[area].includes(k)))
+    const stadiums = state.condition.stadiums[area];
+    return newStadiums.filter(k => ! (stadiums.includes(k)))
 }
 
 const adjustGoumenTimesForArea = (state: any, newArea: string[]) => {
@@ -157,12 +161,26 @@ const adujustTimesForStudium =(state: any, area: string, newStadiums: string[]) 
     });
 }
 
+
+export const loadTargetsFromDate = createAsyncThunk<any, any, { dispatch: AppDispatch, state: RootState }>(
+    'planList/loadTargetsFromDate',
+    async (param, thunk) => {
+        const date = thunk.getState().PlanListSlice.pickerDateTmp;
+        return await ajax({ url: "/ground_view/get_targets/", params: { date }})
+            .then((resp: any) => {
+                thunk.dispatch(planDateInit({}));
+                return resp;
+            });
+    }
+)
+
+
 const TargetsSlice = createSlice({
     name: "TargetsSlice",
     initialState,
     reducers: {
         initNewTarget: (state, action) => {
-            const areas: string[] = action.payload;
+            const areas: string[] = action.payload.areas;
             state.condition.areas = areas;
             areas.map(area => {
                 state.condition.stadiums[area] = [...STADIUMS_DEFAULT_SELECT[area]];
@@ -173,11 +191,10 @@ const TargetsSlice = createSlice({
                     state.condition.goumens[area][stadium] = GOUMENS_DEFAULT_SELECT[stadium];
                 });
             });
-            state.condition.date = format(addDays(new Date(), 3), 'yyyy/MM/dd');
+            state.condition.date = action.payload.date;
             state.condition.total = countGoumens(state.condition);
             state.mode = 'add';
             state.preEditDate = '';
-            state.changeDate = false;
             state.open = true;
         },
         openEditTarget: (state, action) => {
@@ -186,17 +203,14 @@ const TargetsSlice = createSlice({
             state.condition = conditions.length > 0 ? conditions[0] : state.condition;
             state.mode = 'edit';
             state.preEditDate = dt;
-            state.changeDate = false;
             state.open = true;
         },
         cancelCloseTarget: (state, action) => {
             state.condition = {...condition}
             state.open = false;
         },
-        changeTargetsDate: (state, action) => {
-            const dt = action.payload;
-            state.condition.date = dt;
-            state.changeDate = true;
+        changeWatch: (state, action) => {
+            state.watchStart = action.payload
         },
         changeTargetArea: (state, action) => {
             const newArea: string[] = action.payload;
@@ -241,6 +255,9 @@ const TargetsSlice = createSlice({
             if (area in state.condition.goumens && stadium in state.condition.goumens[area]) {
                 state.goumenDialog.checked = state.condition.goumens[area][stadium];
             }
+        },
+        changeMode: (state, action) => {
+            state.mode = action.payload;
         },
         closeGomenDialog: (state, action) => {
             state.goumenDialog = initialGomenDialog;
@@ -295,7 +312,18 @@ const TargetsSlice = createSlice({
         },
         updateTotal: (state, action) => {
             state.condition.total = countGoumens(state.condition);
+        },
+        callbackLoadTargetsFromDate: (state, action) => {
+            const target = action.payload;
+            state.condition = target;
+            state.targets = [target];
+            state.mode = 'edit';
         }
+    },
+    extraReducers: builder => {
+        builder.addCase(loadTargetsFromDate.fulfilled, (state, action) => {
+            TargetsSlice.caseReducers.callbackLoadTargetsFromDate(state, action)
+        });
     }
 });
 
@@ -303,7 +331,8 @@ export const {
     initNewTarget,
     openEditTarget,
     cancelCloseTarget,
-    changeTargetsDate,
+    changeWatch,
+    changeMode,
     changeTargetArea,
     changeTargetStadium,
     changeTargetTime,
