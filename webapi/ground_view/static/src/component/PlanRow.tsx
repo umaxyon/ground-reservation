@@ -32,7 +32,7 @@ const createCss = makeStyles(() => ({
     },
     leftTitle: {
         backgroundColor: '#74c46b',
-        width: '255px',
+        width: '140px',
         height: '100%',
         position: 'relative'
     },
