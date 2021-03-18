@@ -5,3 +5,4 @@ db/mysql/data/*
 scraping/scraper.log
 webapi/migrate.sh
 scraper.log
+batch_start.sh
