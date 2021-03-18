@@ -48,10 +48,36 @@ def get_plan(req):
     try:
         p = ReservationPlan.objects.get(ymd_range=date)
 
-        ret = {'id': p.id, 'ymd_range': p.ymd_range, 'status': p.status, 'area_csv': p.area_csv}
+        ret = {'id': p.id, 'ymd_range': p.ymd_range, 'status': p.status,
+               'area_csv': p.area_csv, 'reserved_cnt': p.reserved_cnt, 'target_cnt': p.target_cnt}
     except ReservationPlan.DoesNotExist:
         ret = {}
     return JsonResponse(ret)
+
+
+@ensure_csrf_cookie
+def get_plan_by_id(req):
+    plan_id = req.GET['planId']
+    try:
+        p = ReservationPlan.objects.get(id=plan_id)
+
+        ret = {'id': p.id, 'ymd_range': p.ymd_range, 'status': p.status,
+               'area_csv': p.area_csv, 'reserved_cnt': p.reserved_cnt, 'target_cnt': p.target_cnt}
+    except ReservationPlan.DoesNotExist:
+        ret = {}
+    return JsonResponse(ret)
+
+
+@ensure_csrf_cookie
+def watch_change(req):
+    plan_id = req.GET.get('planId')
+    is_watch = req.GET.get('isWatch')
+    status = PlanStatus.of(is_watch).nm
+    try:
+        ReservationPlan.objects.filter(id=plan_id).update(status=status)
+    except ReservationPlan.DoesNotExist:
+        status = "err"
+    return JsonResponse({"status": status})
 
 
 @ensure_csrf_cookie
