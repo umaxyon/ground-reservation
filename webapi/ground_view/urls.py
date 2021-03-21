@@ -11,4 +11,5 @@ urlpatterns = [
     path('get_plan/', views.get_plan, name="get_plan"),
     path('get_targets/', views.get_targets, name="get_targets"),
     path('save_plan/', views.save_plan, name="save_plan"),
+    path('delete_plan/', views.delete_plan, name="delete_plan"),
 ]

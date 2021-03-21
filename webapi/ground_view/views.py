@@ -134,6 +134,18 @@ def get_targets(req):
 
 
 @ensure_csrf_cookie
+def delete_plan(req):
+    date = req.GET['date']
+
+    with transaction.atomic():
+        p = ReservationPlan.objects.get(ymd_range=date)
+        ReservationTarget.objects.filter(plan_id=p.id).delete()
+        p.delete()
+
+    return JsonResponse({"status": 'ok'})
+
+
+@ensure_csrf_cookie
 def save_plan(req):
     data = json.loads(req.body.decode('utf-8'))
     mode = req.GET['mode']
