@@ -5,11 +5,21 @@ import { makeStyles, createStyles, Theme } from '@material-ui/core/styles';
 import { createMuiTheme, ThemeProvider } from '@material-ui/core/styles';
 import { green } from '@material-ui/core/colors';
 import EditIcon from '@material-ui/icons/Edit';
+import DeleteForeverIcon from '@material-ui/icons/DeleteForever';
 import { Grid, Paper, Button,  Typography, Badge, Switch, FormControlLabel } from '@material-ui/core';
-import { loadPlanById, submitWatchChange, changeNavi, getPlanFromDate } from '../modules/PlanListSlice';
+import { 
+    loadPlanById,
+    submitWatchChange,
+    changeNavi,
+    getPlanFromDate,
+    openDeleteConfirm,
+    closeDeleteConfirm,
+    deletePlan } from '../modules/PlanListSlice';
 import { loadTargetsFromDate } from '../modules/TargetsSlice'; 
 import { useParams } from 'react-router-dom';
 import { SUB_DOMAIN } from '../modules/Constants';
+import { ConfirmDialog } from './Dialogs';
+import { Plan } from './PlanRow';
 
 
 interface DetailParamType {
@@ -27,6 +37,7 @@ const useStyles = makeStyles((theme: Theme) =>
             margin: 'auto'
         },
         hrMargin: {
+            width: '100%',
             marginTop: '10px',
             marginBottom: '10px'
         },
@@ -43,6 +54,10 @@ const useStyles = makeStyles((theme: Theme) =>
             top: '50%',
             transform: 'translate(0, -50%)'
         },
+        ymdRow: {
+            paddingTop: '10px',
+            paddingBottom: '20px'
+        }
     }),
 );
 
@@ -52,25 +67,45 @@ const PlanDetail: React.FC<any> = (props) => {
     const css = useStyles();
     const params = useParams<DetailParamType>()
     const ps = useAppSelector(st => st.PlanListSlice);
-    const dtl = ps.detail;
+    const dtl = new Plan(ps.detail);
 
     useEffect(() => {
         dispatch(loadPlanById(params.planId))
     }, [params.planId, dispatch])
 
-    const reserved_cnt = dtl.reserved_cnt > -1 ? dtl.reserved_cnt.toString() : '';
-    const target_cnt = dtl.target_cnt > -1 ? dtl.target_cnt.toString() : '';
-    const isWatch = dtl.status === '監視中'
+    useEffect(() => {
+        if (ps.delPlanResp) {
+            history.push(`/${SUB_DOMAIN}/`);
+            dispatch(closeDeleteConfirm({}));
+            dispatch(changeNavi('pList'))
+        }
+    }, [ps.delPlanResp, dispatch])
+
+    const reserved_cnt = dtl.dat.reserved_cnt > -1 ? dtl.dat.reserved_cnt.toString() : '';
+    const target_cnt = dtl.dat.target_cnt > -1 ? dtl.dat.target_cnt.toString() : '';
+    const isWatch = dtl.dat.status === '監視中'
 
     const handleChangeWatch = () => {
         dispatch(submitWatchChange({ planId: params.planId, isWatch: (!isWatch) }))
     }
 
     const handleClickOpen = async () => {
-        await dispatch(getPlanFromDate({ date: dtl.ymd_range, from: "PlanDetail" }));
+        await dispatch(getPlanFromDate({ date: dtl.dat.ymd_range, from: "PlanDetail" }));
         await dispatch(loadTargetsFromDate({}));
         dispatch(changeNavi('add_plan'));
         history.push(`/${SUB_DOMAIN}/add_plan`);
+    }
+
+    const handleClickDelete = () => {
+        dispatch(openDeleteConfirm({}));
+    }
+
+    const handleDeleteConfirm = (yesNo: string) => () => {
+        if (yesNo === 'delete') {
+            dispatch(deletePlan(dtl.dat.ymd_range));
+        } else {
+            dispatch(closeDeleteConfirm({}));
+        }
     }
 
     return (
@@ -79,8 +114,11 @@ const PlanDetail: React.FC<any> = (props) => {
                 <Grid item={true}>
                     <Typography variant="h5">プラン詳細</Typography>
                 </Grid>
-                <Grid item={true}>
+                <Grid item={true} style={{ width: '100%' }}>
                     <hr className={css.hrMargin}/>
+                </Grid>
+                <Grid item={true}>
+                    <Typography variant="h4" className={css.ymdRow}>{dtl.ymdFull()}</Typography>
                 </Grid>
                 <Grid item={true} container={true} className={css.countInfoRow} spacing={3}>
                     <Grid item={true}>
@@ -107,9 +145,22 @@ const PlanDetail: React.FC<any> = (props) => {
                                 プランを編集する
                             </Button>
                         </ThemeProvider>
+                        <Button variant="contained" color="secondary" startIcon={<DeleteForeverIcon />} onClick={handleClickDelete} style={{ marginLeft: '20px', marginTop: '20px'}}>
+                            プランを削除する
+                        </Button>
                     </Grid>
                 </Grid>
             </Grid>
+            <ConfirmDialog
+                open={ps.deleteConfirm}
+                title="プラン削除"
+                message={`プランを削除してもよろしいですか？`}
+                btnDirection="column"
+                txtBtn1="はい"
+                txtBtn2="キャンセル"
+                handleClick1={handleDeleteConfirm("delete")}
+                handleClick2={handleDeleteConfirm("cancel")}
+            />
         </Paper>
     )
 }

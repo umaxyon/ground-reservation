@@ -9,6 +9,9 @@ import RemoveCircleOutlineIcon from '@material-ui/icons/RemoveCircleOutline';
 import IconButton from '@material-ui/core/IconButton';
 import { useHistory } from 'react-router-dom';
 import { SUB_DOMAIN } from '../modules/Constants';
+import format from 'date-fns/format';
+import parse from 'date-fns/parse';
+import ja from 'date-fns/locale/ja';
 
 export class Plan {
     dat: PlanType
@@ -24,6 +27,13 @@ export class Plan {
             (ac, cur) => ac == cur ? cur : `${ac}～${cur}`
         )
     }
+    ymdFull(): string {
+        if (!this.dat.ymd_range) {
+            return "";
+        }
+        const pDate = parse(this.dat.ymd_range, 'yyyyMMdd', new Date());
+        return format(pDate, 'yyyy年MM月dd日(eee)', {locale: ja})
+    }
 
 }
 
@@ -33,7 +43,7 @@ const createCss = makeStyles(() => ({
     },
     leftTitle: {
         backgroundColor: '#74c46b',
-        width: '140px',
+        width: '165px',
         height: '100%',
         position: 'relative'
     },
@@ -95,7 +105,7 @@ const PlanRow: React.FC<any> = (props) => {
             <Grid container={true}>
                 <Grid item={true}>
                     <CardContent className={css.leftTitle}>
-                        <Typography variant="subtitle2" className={css.vcenter}>{plan.ymd()}</Typography>
+                        <Typography variant="subtitle2" className={css.vcenter}>{plan.ymdFull()}</Typography>
                     </CardContent>
                 </Grid>
                 <Grid item={true} xs={true}>

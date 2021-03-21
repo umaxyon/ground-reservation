@@ -26,12 +26,14 @@ interface PlanListState {
     detail: PlanType,
     count: number,
     addPlanResp: boolean,
+    delPlanResp: boolean,
     navi: 'pList' | 'addPlan' | 'settings',
     pickerDate: string,
     pickerDateTmp: string,
     changeDate: boolean,
     dateConfrict: string,
-    targetEditDate: string
+    targetEditDate: string,
+    deleteConfirm: boolean
 }
 
 const initialPlantype: PlanType = {
@@ -50,12 +52,14 @@ const initialState: PlanListState = {
     detail: initialPlantype,
     count: -1,
     addPlanResp: false,
+    delPlanResp: false,
     navi: 'pList',
     pickerDate: '',
     pickerDateTmp: '',
     changeDate: false,
     dateConfrict: '',
-    targetEditDate: ''
+    targetEditDate: '',
+    deleteConfirm: false,
 }
 
 export const convertTargetListForSubmit = (targets: Target[]) => {
@@ -134,6 +138,14 @@ export const submitPlan = createAsyncThunk<any, any, { dispatch: AppDispatch, st
     }
 )
 
+export const deletePlan = createAsyncThunk<any, any, { dispatch: AppDispatch, state: RootState }>(
+    'planList/deletePlan',
+    async (date: string, thunk) => {
+        return await ajax({ url: "/ground_view/delete_plan/", params: { date }}).then((resp: any) => resp);
+    }
+)
+
+
 export const changePickerDateConfirm = (date: string) => async (dispatch: AppDispatch, getState: any) => {
     dispatch(PlanListSlice.actions.setPickerDateTmp(date));
     dispatch(getPlanFromDate({ date, from: "changePickerDateConfirm" }));
@@ -194,6 +206,13 @@ const PlanListSlice = createSlice({
         },
         callbackSubmitWatchChange: (state, action) => {
             state.detail.status = action.payload.status;
+        },
+        openDeleteConfirm: (state, action) => {
+            state.deleteConfirm = true;
+        },
+        closeDeleteConfirm: (state, action) => {
+            state.deleteConfirm = false;
+            state.delPlanResp = false;
         }
     },
     extraReducers: builder => {
@@ -214,6 +233,9 @@ const PlanListSlice = createSlice({
             state.targetEditDate = "";
             state.addPlanResp = true;
         });
+        builder.addCase(deletePlan.fulfilled, (state, action) => {
+            state.delPlanResp = true;
+        });
         builder.addCase(loadPlanById.fulfilled, (state, action) => {
             PlanListSlice.caseReducers.callbackLoadPlanById(state, action);
         });
@@ -228,6 +250,8 @@ export const {
     changePickerDate,
     planDateInit,
     decideTargetDateChange,
-    firstEnd
+    firstEnd,
+    openDeleteConfirm,
+    closeDeleteConfirm
 } = PlanListSlice.actions;
 export default PlanListSlice.reducer;

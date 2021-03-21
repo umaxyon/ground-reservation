@@ -158,11 +158,11 @@ class TargetRowHolder:
 
 
 class PlanTargetHolder:
-    ymd = ""
-    areas = set([])
-    targets: List[TargetRowHolder] = []
-
     def __init__(self, items, plan_status):
+        self.ymd = ""
+        self.areas = set([])
+        self.targets: List[TargetRowHolder] = []
+
         for r in items:
             t = TargetRowHolder(r)
             self.ymd = t.ymd
