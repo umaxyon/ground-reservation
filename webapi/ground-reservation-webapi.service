@@ -1,0 +1,13 @@
+[Unit]
+Description=Gunicorn to ground-reservation
+After=network.target
+
+[Service]
+User = ubuntu
+Group = ubuntu
+ExecStart = /home/ubuntu/ground-reservation/webapi/django_start.sh
+Restart = always
+Type = simple
+
+[Install]
+WantedBy = multi-user.target

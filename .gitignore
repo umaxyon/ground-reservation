@@ -6,3 +6,5 @@ scraping/scraper.log
 webapi/migrate.sh
 scraper.log
 batch_start.sh
+webapi/collectstatic.sh
+webapi/django_start.sh
