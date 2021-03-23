@@ -21,12 +21,14 @@ class SystemCondition(models.Model):
 
     available = models.IntegerField('システム利用可否', validators=[reg_on_off])
     debug = models.IntegerField('デバッグモード', validators=[reg_on_off])
+    week_targets = models.CharField('曜日ターゲット', max_length=20, default='')
     last_update = models.CharField('最終更新', max_length=19, validators=[reg_ymdhms])
 
 
 class ReservationPlan(models.Model):
     status = models.CharField('状態', max_length=10)
     ymd_range = models.CharField('年月日範囲', max_length=17, default='')
+    author = models.CharField('作成者', max_length=5, default='')
     area_csv = models.CharField('地域', max_length=80, default='')
     target_cnt = models.IntegerField('ターゲット数', validators=[MaxLengthValidator(3)], default=0)
     reserved_cnt = models.IntegerField('予約済み数', validators=[MaxLengthValidator(3)], default=0)
@@ -38,16 +40,11 @@ class ReservationPlan(models.Model):
             area_csv=','.join(dat.areas),
             ymd_range=dat.ymd,
             reserved_cnt=0,
-            target_cnt=dat.target_count()
+            target_cnt=dat.target_count(),
+            author="man"
         )
         plan.save()
         return plan.id
-
-    @staticmethod
-    def convert_request_to_plan(items):
-        holder = PlanTargetHolder(items)
-        print(holder.target_count())
-        pass
 
 
 class ReservationTarget(models.Model):
@@ -83,3 +80,8 @@ class ReservationTarget(models.Model):
     def __str__(self):
         return (f"{self.status} {self.ym}{self.dt} {self.plan_id} {self.area} {self.gname} {self.timebox} "
                 f"{self.gno_csv} {self.reserve_gno_csv}")
+
+
+class ReservationWeeklyTarget(models.Model):
+    week_day = models.CharField('曜日', max_length=1)
+    target_json = models.CharField('ターゲット設定JSON', max_length=3000)
