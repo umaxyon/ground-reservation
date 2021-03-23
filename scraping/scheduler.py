@@ -8,6 +8,7 @@ from logging import StreamHandler
 from logging.handlers import RotatingFileHandler
 from Reserver import Reserver
 from Dao import Dao
+from WeeklyPlanner import WeeklyPlanner
 
 
 def now():
@@ -34,10 +35,15 @@ log = init_logger()
 dao = Dao()
 
 
+async def process():
+    await Reserver(log, dao).run()
+    WeeklyPlanner(log, dao).run()
+
+
 def run_reserver(debug):
     log_level = logging.DEBUG if debug else logging.INFO
     log.setLevel(log_level)
-    asyncio.get_event_loop().run_until_complete(Reserver(log, dao).run())
+    asyncio.get_event_loop().run_until_complete(process())
 
 
 def schedule(interval, wait=True):

@@ -1,4 +1,7 @@
 import datetime as dt
+from functools import reduce
+from datetime import time
+from datetime import timedelta
 from enum import Enum
 from typing import List
 
@@ -136,25 +139,42 @@ class CalDay:
 
 class TargetRowHolder:
     def __init__(self, post_row):
-        y = post_row['date'][0:4]
-        m = post_row['date'][4:6]
-        d = post_row['date'][6:]
+        self.ymd = ''
+        self.ym = ''
+        self.dt = ''
+        self.week_day = ''
 
-        stadium = Stadium.nm_of(post_row['stadium'])
+        if post_row['date'] != '':
+            y = post_row['date'][0:4]
+            m = post_row['date'][4:6]
+            d = post_row['date'][6:]
+            self.ym = f"{y}{m}"
+            self.dt = d
+            self.ymd = f"{y}{m}{d}"
+            self.week_day = get_weekday(y, m, d)
 
+        self.stadium = Stadium.nm_of(post_row['stadium'])
         self.status = '未予約'
-        self.ym = f"{y}{m}"
-        self.dt = d
-        self.ymd = f"{y}{m}{d}"
-        self.week_day = get_weekday(y, m, d)
         self.area = post_row['area']
-        self.gname = stadium.nm
-        self.timebox = stadium.timebox().index(post_row['time'])
+        self.gname = self.stadium.nm
+        self.timebox = self.stadium.timebox().index(post_row['time'])
         self.goumens = post_row['goumen'] or []
         self.reserve_gno_csv = ""
 
     def count(self):
         return len(self.goumens)
+
+    def to_param(self, plan_id, ymd=""):
+        buf = ymd or self.ymd
+        ym = buf[0:6]
+        d = buf[6:]
+        week_day = DateTimeUtil.week_day(buf)
+
+        # "plan_id, status, ym, dt, week_day, area, gname, gno_csv, timebox, reserve_gno_csv"
+        return (
+            plan_id, self.status, int(ym), int(d), week_day, self.area,
+            self.gname, ','.join(self.goumens), self.timebox, self.reserve_gno_csv
+        )
 
 
 class PlanTargetHolder:
@@ -185,6 +205,25 @@ class PlanTargetHolder:
             for t in self.targets:
                 if t.area == old_t.area and t.gname == old_t.gname and t.timebox == old_t.timebox:
                     t.reserve_gno_csv = old_t.reserve_gno_csv
+
+    def create(self, dao, day):
+        p_sql = (
+            "insert into ground_view_reservationplan("
+            "status, area_csv, ymd_range, reserved_cnt, target_cnt, author) values ("
+            "%s, %s, %s, %s, %s, %s)"
+        )
+
+        # target_cnt = reduce(lambda a, b: a + b, [len(t.goumens) for t in self.targets])
+        params = ('監視中', (",".join(self.areas)), day, 0, self.target_count(), 'sys')
+        p_id = dao.insert_exec(p_sql, params)
+
+        t_sql = (
+            "insert into ground_view_reservationtarget("
+            "plan_id, status, ym, dt, week_day, area, gname, gno_csv, timebox, reserve_gno_csv) values ("
+            "%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
+        )
+        t_values = [t.to_param(p_id, day) for t in self.targets]
+        dao.insert_multi_exec(t_sql, t_values)
 
 
 class ReservationModel:
@@ -246,3 +285,102 @@ class Target(ReservationModel):
             f'{self.area} {self.gname}[{self.gno_csv if self.gno_csv is not None else "all"}] '
             f'tm={self.timebox} p={self.plan_id})'
         )
+
+
+class DayOfWeek(Enum):
+    Monday = 0
+    Tuesday = 1
+    Wednesday = 2
+    Thursday = 3
+    Friday = 4
+    Saturday = 5
+    Sunday = 6
+
+    def iso_value(self):
+        return self.value + 1
+
+    def to_japanese(self):
+        return '月火水木金土日'[self.value]
+
+    @property
+    def shortname(self):
+        return self.name[:3]
+
+    @staticmethod
+    def from_date(d: dt.datetime):
+        return DayOfWeek(d.weekday())
+
+    @staticmethod
+    def from_csv(val_csv: str):
+        return tuple([DayOfWeek(int(v)) for v in val_csv.split(',')])
+
+    @classmethod
+    def all(cls):
+        return (cls.Monday,
+                cls.Tuesday,
+                cls.Wednesday,
+                cls.Thursday,
+                cls.Friday,
+                cls.Saturday,
+                cls.Sunday,)
+
+    @classmethod
+    def weekday(cls):
+        return (cls.Monday,
+                cls.Tuesday,
+                cls.Wednesday,
+                cls.Thursday,
+                cls.Friday,)
+
+    @classmethod
+    def holiday(cls):
+        return (cls.Saturday,
+                cls.Sunday,)
+
+
+class DateTimeUtil(object):
+
+    @staticmethod
+    def today():
+        return dt.datetime.today().replace(hour=0, minute=0, second=0, microsecond=0)
+
+    @staticmethod
+    def add_day(d: dt.datetime, days: int):
+        return d + timedelta(days=days)
+
+    @staticmethod
+    def add_day_str(d: str, days: int):
+        return DateTimeUtil.to_str(DateTimeUtil.add_day(DateTimeUtil.from_str(d), days))
+
+    @staticmethod
+    def to_str(day: dt.datetime):
+        return day.strftime('%Y%m%d')
+
+    @staticmethod
+    def from_str(str_day: str):
+        return dt.datetime.strptime(str_day, '%Y%m%d')
+
+    @staticmethod
+    def week_day(str_day: str):
+        return DayOfWeek.from_date(DateTimeUtil.from_str(str_day)).to_japanese()
+
+    @staticmethod
+    def str_today():
+        return DateTimeUtil.to_str(DateTimeUtil.today())
+
+    @staticmethod
+    def str_after_day(str_date, days):
+        day = DateTimeUtil.from_str(str_date)
+        return DateTimeUtil.to_str(day + timedelta(days=days))
+
+    @staticmethod
+    def make_day_range_with_week_day(start_day, end_day, week_days=()):
+        day = DateTimeUtil.from_str(start_day)
+        end = DateTimeUtil.from_str(end_day)
+
+        ret = []
+        while day < end:
+            if DayOfWeek.from_date(day) in week_days:
+                ret.append(DateTimeUtil.to_str(day))
+            day = day + timedelta(days=1)
+        return ret

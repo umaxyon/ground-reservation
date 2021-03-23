@@ -47,7 +47,7 @@ class Dao:
     def get_system_condition(self):
         self.cur.execute('select * from ground_view_systemcondition WHERE id = %s', [1])
         dat = self.cur.fetchone()
-        return {'available': dat[1] == 1, 'debug': dat[2] == 1, 'last_update': dat[3]}
+        return {'available': dat[1] == 1, 'debug': dat[2] == 1, 'last_update': dat[3], 'week_targets': dat[4]}
 
     @transaction
     def recreate_groundinfo(self, params):
@@ -71,4 +71,32 @@ class Dao:
         data = self.cur.fetchall()
         return [Target(self, d) for d in data]
 
+    @transaction
+    def find_last_plan_created_by_system(self):
+        self.cur.execute((
+            'select * from ground_view_reservationplan '
+            'WHERE author = %s ORDER BY ymd_range DESC LIMIT 1'), ['sys'])
+        data = self.cur.fetchone()
+        return Plan(self, data) if data is not None else None
 
+    def get_week_targets(self):
+        cond = self.get_system_condition()
+        return cond['week_targets']
+
+    @transaction
+    def get_weekly_target_json(self, targets):
+        param = [r.value for r in targets]
+        sql = 'SELECT * FROM ground_view_reservationweeklytarget WHERE week_day in (%s)'
+        sql = sql % ', '.join(map(lambda x: '%s', targets))
+        self.cur.execute(sql, param)
+        data = self.cur.fetchall()
+        return {d[1]: d[2] for d in data}
+
+    @transaction
+    def insert_exec(self, sql, params):
+        self.cur.execute(sql, params)
+        return self.conn.insert_id()
+
+    @transaction
+    def insert_multi_exec(self, sql, params):
+        self.cur.executemany(sql, params)
