@@ -29,7 +29,7 @@ class Reserver:
                 # TODO describe_calenderからここまでの間に予約されて押せない場合の実験が必要
                 await cal.click_day(d)
                 click_cnt += await info.click_abailable_target_btn(t)
-
+        ret = []
         if click_cnt > 0:
             await info.click_reservation_next_button()
             if not await info.select_mokuteki():
@@ -38,8 +38,15 @@ class Reserver:
 
             await info.click_submit_reservation()  # 予約確定
             no = await info.get_reservation_no()
+            reserve_data = await info.get_reservation_datas()
+            ret.extend(reserve_data)
             self.log.info(f'[予約確定] 予約no={no}')
+
             await info.click_continue_application()  # 申し込みを続ける
+        return ret
+
+    def update_reserve_result(self, results):
+        pass
 
     async def run(self):
         self.initialize_plan()
@@ -47,6 +54,7 @@ class Reserver:
 
         await self.scraper.get_init_page()
 
+        all_reserved = []
         for area in target_areas:
             self.log.debug(area.nm)
             await self.scraper.move_baseball_reserve_top()
@@ -58,10 +66,12 @@ class Reserver:
             while True:
                 cal = ReservationCalender(self.scraper)
 
-                await self.exec_reservation(cal, cur_area_targets)
+                reserve_data = await self.exec_reservation(cal, cur_area_targets)
+                all_reserved.extend(reserve_data)
 
                 await cal.click_next_month()  # 翌月
                 if await cal.is_not_next_page():
                     await self.scraper.click_to_menu_button()
                     break
 
+        self.update_reserve_result(all_reserved)

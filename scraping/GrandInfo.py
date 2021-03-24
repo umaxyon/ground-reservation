@@ -1,14 +1,6 @@
 from ground_view.batch.Share import Stadium
+from ground_view.batch.Share import DateTimeUtil as Du
 
-# name_map = {
-#     '昭和島運動場野球場': '昭和島運動場',
-#     '平和島公園野球場': '平和島公園',
-#     '東調布公園': '東調布公園',
-#     '多摩川緑地野球場': '多摩川緑地',
-#     '多摩川六郷橋緑地野球場': '六郷橋緑地',
-#     '多摩川ガス橋緑地野球場': 'ガス橋緑地',
-#     '多摩川大師橋緑地野球場': '大師橋緑地'
-# }
 
 unsupported = {
     'ｶﾞｽ橋緑地_5': 'selectboxに軟式野球が無い'
@@ -102,6 +94,29 @@ class GrandInfo:
         )
         item = await self.page.J(css)
         return await (await item.getProperty('textContent')).jsonValue()
+
+    async def get_reservation_datas(self):
+        css = (
+            'form > div > table > tbody > tr > td > table:nth-of-type(3) > tbody > tr.WTBL'
+        )
+        trs = await self.page.JJ(css)
+        ret = []
+        for row, tr in enumerate(trs):
+            if len(trs) - 1 == row:
+                break  # 最終行は合計金額行なので不要
+
+            tds = await trs[row].JJ('td')
+            day = await self.page.evaluate('elm => elm.innerHTML', tds[1])
+            stadium = await self.page.evaluate('elm => elm.innerHTML', tds[2])
+            times = await self.page.evaluate('elm => elm.innerHTML', tds[3])
+            fee = await self.page.evaluate('elm => elm.innerHTML', tds[5])
+
+            day = Du.to_str(Du.from_str_jp(day))
+            stadium = Stadium.full_nm_of(stadium.split('_')[0])
+            times = [f"{r.split('-')[0][:2]}-{r.split('-')[1][:2]}" for r in times.split(' ') if r != '']
+
+            ret.append((day, stadium, times, fee))
+        return ret
 
     async def select_mokuteki(self):
         mokuteki_select = await self.page.JJ('form > div > table.STTL > tbody > tr.WTBL select')
