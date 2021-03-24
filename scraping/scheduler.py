@@ -9,6 +9,7 @@ from logging.handlers import RotatingFileHandler
 from Reserver import Reserver
 from Dao import Dao
 from WeeklyPlanner import WeeklyPlanner
+from PlanEraser import PlanEraser
 
 
 def now():
@@ -37,6 +38,7 @@ dao = Dao()
 
 async def process():
     await Reserver(log, dao).run()
+    PlanEraser(log, dao).run()
     WeeklyPlanner(log, dao).run()
 
 
@@ -64,4 +66,4 @@ def schedule(interval, wait=True):
 
 
 if __name__ == "__main__":
-    schedule(10 * 60)
+    schedule(3 * 60)

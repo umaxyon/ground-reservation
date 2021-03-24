@@ -100,3 +100,13 @@ class Dao:
     @transaction
     def insert_multi_exec(self, sql, params):
         self.cur.executemany(sql, params)
+
+    @transaction
+    def find_old_plan(self, today):
+        self.cur.execute('select id from ground_view_reservationplan where ymd_range < %s', [today])
+        return [r[0] for r in self.cur.fetchall()]
+
+    @transaction
+    def delete_targets_and_plan(self, pid):
+        self.cur.execute('delete from ground_view_reservationtarget where plan_id = %s', [pid])
+        self.cur.execute('delete from ground_view_reservationplan where id = %s', [pid])

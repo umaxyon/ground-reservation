@@ -1,6 +1,6 @@
 import datetime as dt
-from functools import reduce
-from datetime import time
+import re
+
 from datetime import timedelta
 from enum import Enum
 from typing import List
@@ -359,6 +359,10 @@ class DateTimeUtil(object):
     @staticmethod
     def from_str(str_day: str):
         return dt.datetime.strptime(str_day, '%Y%m%d')
+
+    @staticmethod
+    def from_str_jp(str_day_jp: str):
+        return dt.datetime.strptime(re.sub(r'\(.+\)', '', str_day_jp), '%Y年%m月%d日')
 
     @staticmethod
     def week_day(str_day: str):
