@@ -145,7 +145,7 @@ const AddPlan: React.FC<any> = (props) => {
     }
 
     const handleDateConfrict = (mode: string) => () => {
-        if (mode === 'editOld') {
+        if (mode === 'editOld' && ps.dateConfrict) {
             dispatch(loadTargetsFromDate({}))
         } else {
             dispatch(planDateInit({})) // キャンセル

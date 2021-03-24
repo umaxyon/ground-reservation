@@ -2,7 +2,6 @@ from django.shortcuts import render
 from django.http.response import JsonResponse
 from django.views.decorators.csrf import ensure_csrf_cookie
 from ground_view.models import SystemCondition, ReservationPlan, ReservationTarget
-from itertools import groupby
 import json
 from django.db import transaction
 from .batch.Share import PlanTargetHolder, TimeboxResolver, Stadium, Area, PlanStatus
@@ -36,7 +35,8 @@ def get_plans(req):
             'status': p.status,
             'area_csv': p.area_csv,
             'reserved_cnt': p.reserved_cnt,
-            'target_cnt': p.target_cnt
+            'target_cnt': p.target_cnt,
+            'author': p.author
         }
         ret['plans'].append(dat)
     return JsonResponse(ret)

@@ -7,11 +7,15 @@ import ContactlessIcon from '@material-ui/icons/Contactless';
 import ArrowForwardIosIcon from '@material-ui/icons/ArrowForwardIos';
 import RemoveCircleOutlineIcon from '@material-ui/icons/RemoveCircleOutline';
 import IconButton from '@material-ui/core/IconButton';
+import ArrowDropDownCircleIcon from '@material-ui/icons/ArrowDropDownCircle';
+import AccountCircleIcon from '@material-ui/icons/AccountCircle';
 import { useHistory } from 'react-router-dom';
 import { SUB_DOMAIN } from '../modules/Constants';
 import format from 'date-fns/format';
 import parse from 'date-fns/parse';
 import ja from 'date-fns/locale/ja';
+import { createStyles, Theme } from '@material-ui/core/styles';
+import { teal, indigo } from '@material-ui/core/colors';
 
 export class Plan {
     dat: PlanType
@@ -37,7 +41,7 @@ export class Plan {
 
 }
 
-const createCss = makeStyles(() => ({
+const createCss = makeStyles((theme: Theme) => createStyles({
     root: {
         marginBottom: '10px'
     },
@@ -79,7 +83,7 @@ const createCss = makeStyles(() => ({
         transform: 'translate(0, -50%)'
     },
     countText: {
-        marginLeft: '80px',
+        marginLeft: '190px',
         display: 'inline-block',
         position: 'absolute',
         top: '50%',
@@ -88,17 +92,32 @@ const createCss = makeStyles(() => ({
     stadiumSpan: {
         fontSize: "120%",
         fontWeight: "bold"
+    },
+    colorPrimary: {
+        backgroundColor: teal[500],
+        color: theme.palette.getContrastText(teal[500])
     }
 }))
+
+
+function AuthorBadge(props: Partial<{ author: string }>) {
+    const css = createCss();
+    return (props.author === 'sys') ?
+        <Chip size="small" className={css.colorPrimary} avatar={<ArrowDropDownCircleIcon className={css.colorPrimary} />} color="primary" label="自動作成" />  :
+        <Chip size="small" avatar={<AccountCircleIcon />} color="secondary" label="手動作成" /> 
+}
+
+function StatusChip(props: Partial<{ status: string }>) {
+    return (props.status === '監視中') ?
+    <Chip size="small" avatar={<ContactlessIcon />} color="primary" label={props.status} />  :
+    <Chip size="small" avatar={<RemoveCircleOutlineIcon />} label={props.status} /> 
+}
+
 
 const PlanRow: React.FC<any> = (props) => {
     const plan = props.data;
     const css = createCss();
     const { push } = useHistory();
-
-    const statusBadge = (plan.dat.status === '監視中') ?
-        <Chip size="small" avatar={<ContactlessIcon />} color="primary" label={plan.dat.status} />  :
-        <Chip size="small" avatar={<RemoveCircleOutlineIcon />} label={plan.dat.status} /> 
 
     return (
         <Card key={`plan_${props.row}_card`} className={css.root}>
@@ -118,7 +137,10 @@ const PlanRow: React.FC<any> = (props) => {
                             </Grid>
                             <Grid item={true} container={true} direction="row" justify="flex-start" spacing={2} className={css.textLineGrid}>
                                 <Grid item={true} className={css.vcenter}>
-                                    {statusBadge}
+                                    {<StatusChip status={plan.dat.status} />}
+                                </Grid>
+                                <Grid item={true} className={css.vcenter} style={{marginLeft: '90px'}}>
+                                    <AuthorBadge author={plan.dat.author} />
                                 </Grid>
                                 <Grid item={true} className={css.countText}>
                                     予約済み: {plan.dat.reserved_cnt}  /  対象: {plan.dat.target_cnt}

@@ -222,6 +222,7 @@ const PlanListSlice = createSlice({
         });
         builder.addCase(getPlanFromDate.fulfilled, (state, action) => {
             if (action.payload.from === 'changePickerDateConfirm') {
+                delete action.payload.from;
                 PlanListSlice.caseReducers.callbackDateCheck(state, action);
             } else {
                 PlanListSlice.caseReducers.callbackPlanDetailOpenEdit(state, action);

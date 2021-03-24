@@ -265,7 +265,7 @@ const AddTarget: React.FC<any> = (props) => {
                                     handleChange={handleAreaChange} />
                         </Grid>
                         <Grid item={true} container={true} className={css.scrollRootGrid}>
-                            <ScrollDiv diffHeight={267} width="100%" padding='10px 2px 5px 2px'>
+                            <ScrollDiv diffHeight={270} width="100%" padding='10px 2px 5px 2px'>
                                 <div className={css.scrollContentWrap}>
                                     {areaGrids}
                                 </div>
