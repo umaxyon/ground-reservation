@@ -17,6 +17,7 @@ import {
     openGomenDialog, ITimes, IGoumen,
     GoumenDialog, closeGomenDialog, commitGoumenDialog, checkGoumen,
     ErrorDialog, openErrorDialog, closeErrorDialog } from '../modules/TargetsSlice';
+import { createWeekTargetAndClose } from '../modules/SettingsSlice';
 import ScrollDiv from './ScrollDiv';
 import GridOnIcon from '@material-ui/icons/GridOn';
 import { AREAS, AREA_KEYS, STADIUMS, STADIUM_KEYS, GOUMENS, TIME_RANGES } from '../modules/Constants';
@@ -91,7 +92,7 @@ const AddTarget: React.FC<any> = (props) => {
     const css = createCss();
     const dt = new Date();
     const mode = useAppSelector(st => st.TargetsSlice.mode);
-    const strMode = (mode === 'edit') ? '編集' : '追加';
+    const strMode = (mode === 'edit' || mode === 'week') ? '編集' : '追加';
     const pickerDate = useAppSelector(st => st.PlanListSlice.pickerDate);
     const pDate = (pickerDate) ? parse(pickerDate, 'yyyyMMdd', dt) : addDays(dt, 3);
 
@@ -103,7 +104,7 @@ const AddTarget: React.FC<any> = (props) => {
     const selectedGoumensOb: IGoumen = useAppSelector(st => st.TargetsSlice.condition.goumens);
     const errorDialog: ErrorDialog = useAppSelector(st => st.TargetsSlice.errorDialog);
     const total = useAppSelector(st => st.TargetsSlice.condition.total);
-    const registered_targets = useAppSelector(st => st.TargetsSlice.targets);
+    const week = useAppSelector(st => st.SettingsSlice.openTaregeWeek);
 
     const handleAreaChange = (event: React.ChangeEvent<{ value: unknown }>) => {
         dispatch(changeTargetArea(event.target.value));
@@ -139,12 +140,20 @@ const AddTarget: React.FC<any> = (props) => {
             dispatch(openErrorDialog({title: "ターゲットがありません", message: "ターゲットを1件以上選択してください"}));
             return
         }
-        dispatch(createTargetAndClose({}));
+        
+        if (week !== "") {
+            dispatch(createWeekTargetAndClose(week));
+        } else {
+            dispatch(createTargetAndClose({}));
+        }
     }
 
     const handleErrorOkClick = () => {
         dispatch(closeErrorDialog({}));
     }
+
+    const titleDate = (mode === "week") ? `週次プラン: ${week}曜日` :
+        format(pDate, 'yyyy年MM月dd日(eee)', {locale: ja})
 
     const goumenDialogCurrentValues = GOUMENS.get(goumenDialog.stadium) || [];
     const goumeDialogContent = (
@@ -249,9 +258,7 @@ const AddTarget: React.FC<any> = (props) => {
                     <Grid container={true} direction="column" className={css.rowContainer} spacing={3}>
                         <Grid item={true} container={true} direction="row" spacing={2} alignItems="center">
                             <Grid item={true}>
-                                <Typography variant="h5">
-                                    {format(pDate, 'yyyy年MM月dd日(eee)', {locale: ja})}
-                                </Typography>
+                                <Typography variant="h5">{titleDate}</Typography>
                             </Grid>
                             <Grid item={true}>
                                 <Typography variant="subtitle2" className={css.selectCountTypo}>

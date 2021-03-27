@@ -112,7 +112,7 @@ const countGoumens = (condition: Target) => {
 
 const getAddedDiffListForStadium = (state: any, area: string, newStadiums: string[]): string[] => {
     const stadiums = state.condition.stadiums[area];
-    return newStadiums.filter(k => ! (stadiums.includes(k)))
+    return (stadiums) ? newStadiums.filter(k => ! (stadiums.includes(k))) : newStadiums;
 }
 
 const adjustGoumenTimesForArea = (state: any, newArea: string[]) => {
@@ -199,13 +199,13 @@ const TargetsSlice = createSlice({
         },
         openEditTarget: (state, action) => {
             const dt = action.payload;
-            const conditions: Target[] = state.targets.filter(t => t.date === dt)
+            const conditions: Target[] = state.targets.filter(t => t.date === dt);
             state.condition = conditions.length > 0 ? conditions[0] : state.condition;
             state.mode = 'edit';
             state.preEditDate = dt;
             state.open = true;
         },
-        cancelCloseTarget: (state, action) => {
+        closeAndClearTarget: (state, action) => {
             state.condition = {...condition}
             state.open = false;
         },
@@ -286,7 +286,9 @@ const TargetsSlice = createSlice({
                 const targets: Target[] = state.targets.filter(t => t.date !== state.preEditDate)
                 state.targets = targets;
             }
-            state.targets.push(target);
+            if (state.mode !== 'week') {
+                state.targets.push(target);
+            }
             state.condition = {...condition}
             state.open = false;
         },
@@ -310,6 +312,11 @@ const TargetsSlice = createSlice({
             });
             state.targets = newTargets;
         },
+        setWeekMode: (state, action) => {
+            const { condition } = action.payload;
+            state.condition = condition;
+            state.mode = 'week';
+        },
         updateTotal: (state, action) => {
             state.condition.total = countGoumens(state.condition);
         },
@@ -330,7 +337,7 @@ const TargetsSlice = createSlice({
 export const {
     initNewTarget,
     openEditTarget,
-    cancelCloseTarget,
+    closeAndClearTarget,
     changeWatch,
     changeMode,
     changeTargetArea,
@@ -345,5 +352,6 @@ export const {
     closeErrorDialog,
     createTargetAndClose,
     clearAllTarget,
-    allTargetDateChange} = TargetsSlice.actions;
+    allTargetDateChange,
+    setWeekMode } = TargetsSlice.actions;
 export default TargetsSlice.reducer;
