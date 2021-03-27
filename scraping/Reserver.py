@@ -19,30 +19,33 @@ class Reserver:
         self.targets = list(itertools.chain.from_iterable([p.get_targets(force=True) for p in self.plans]))
 
     async def exec_reservation(self, cal, targets):
-        click_cnt = 0
         info = GrandInfo(self.scraper)
         await cal.describe_calender()
+        self.log.debug(f"[{cal.year}年{cal.month:0>2}月]")
         this_month_targets = [t[1] for t in targets if f"{cal.year}{cal.month:0>2}" == t[0]]
+
+        ret = []
         for t in this_month_targets:
             match_days = await cal.get_match_days(t)
+            self.log.debug(f"カレンダー空き日マッチ日数: {len(match_days)}日")
             for d in match_days:
-                # TODO describe_calenderからここまでの間に予約されて押せない場合の実験が必要
                 await cal.click_day(d)
-                click_cnt += await info.click_abailable_target_btn(t)
-        ret = []
-        if click_cnt > 0:
-            await info.click_reservation_next_button()
-            if not await info.select_mokuteki():
-                await info.click_reservation_back_button()
-                return
+                click_cnt = await info.click_abailable_target_btn(t)
+                self.log.debug(f"ターゲットクリック数: {click_cnt}")
 
-            await info.click_submit_reservation()  # 予約確定
-            no = await info.get_reservation_no()
-            reserve_data = await info.get_reservation_datas()
-            ret.extend(reserve_data)
-            self.log.info(f'[予約確定] 予約no={no}')
+                if click_cnt > 0:
+                    await info.click_reservation_next_button()
+                    if not await info.select_mokuteki():
+                        await info.click_reservation_back_button()
+                        continue
 
-            await info.click_continue_application()  # 申し込みを続ける
+                    await info.click_submit_reservation()  # 予約確定
+                    no = await info.get_reservation_no()
+                    reserve_data = await info.get_reservation_datas()
+                    ret.extend(reserve_data)
+                    self.log.info(f'[予約確定] 予約no={no}')
+
+                    await info.click_continue_application()  # 申し込みを続ける
         return ret
 
     def update_reserve_result(self, results):
@@ -56,7 +59,7 @@ class Reserver:
 
         all_reserved = []
         for area in target_areas:
-            self.log.debug(area.nm)
+            self.log.debug(f"エリア: {area.nm}")
             await self.scraper.move_baseball_reserve_top()
             await self.scraper.click_ground_area_button(area.id)
             await self.scraper.login()

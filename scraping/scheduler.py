@@ -43,7 +43,7 @@ async def process(account, pswd):
 
 
 def run_reserver(debug, account, pswd):
-    log_level = logging.DEBUG if debug else logging.INFO
+    log_level = logging.DEBUG if debug == 1 else logging.INFO
     log.setLevel(log_level)
     asyncio.get_event_loop().run_until_complete(process(account, pswd))
 

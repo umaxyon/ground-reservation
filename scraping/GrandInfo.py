@@ -46,6 +46,7 @@ class GrandInfo:
         trs = await self.get_trs()
         click_cnt = 0
 
+        self.log.debug(f"[{target.gname}]")
         for row, tr in enumerate(trs):
             tds = await self.get_tds(row)
             name, gno = await self.get_name(tds[0])

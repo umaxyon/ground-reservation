@@ -282,7 +282,7 @@ class Target(ReservationModel):
     def __repr__(self):
         return (
             f'Target('
-            f'[{self.status}]{self.ym}{self.dt}({self.week_day}) '
+            f'[{self.status}]{self.ym}{self.dt:0>2}({self.week_day}) '
             f'{self.area} {self.gname}[{self.gno_csv if self.gno_csv is not None else "all"}] '
             f'tm={self.timebox} p={self.plan_id})'
         )
