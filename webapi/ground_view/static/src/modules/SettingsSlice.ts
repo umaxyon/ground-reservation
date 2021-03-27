@@ -132,12 +132,15 @@ const SettingsSlice = createSlice({
             const newWeeks: string[] = action.payload;
             state.weeks = newWeeks;
             const oldWeekData = Object.assign({}, state.weekData);
-            newWeeks.forEach(w => {
-                if (!(w in oldWeekData)) {
+            const oldWeeks = Object.keys(oldWeekData)
+            const keys = Array.from(new Set([...oldWeeks, ...newWeeks]));
+            keys.forEach(w => {
+                if ((oldWeeks.includes(w) && !newWeeks.includes(w)) || (!oldWeeks.includes(w) && newWeeks.includes(w))) {
                     oldWeekData[w] = { enable: false, json: "" }
-                }
+                } 
             });
             state.weekData = oldWeekData;
+            state.isEdit = true;
         },
         changeWeekEnabled: (state, action) => {
             const { enable, week } = action.payload;

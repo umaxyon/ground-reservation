@@ -42,11 +42,7 @@ def save_settings(req):
     data = json.loads(req.body.decode('utf-8'))
 
     with transaction.atomic():
-        syscon = SystemCondition.objects.get(id=1)
-        syscon.account = data['account']
-        syscon.pswd = data['pswd']
-        syscon.save()
-
+        week_targets = []
         for w in DayOfWeek.all():
             target_json = ''
             enable = 0
@@ -54,11 +50,18 @@ def save_settings(req):
                 wd = data['weekData'][w.to_japanese()]
                 target_json = wd['json']
                 enable = 1 if wd['enable'] else 0
+                week_targets.append(str(w.value))
 
-            model, _ = ReservationWeeklyTarget.objects.get_or_create(week_day=w.value)
+            model, _ = ReservationWeeklyTarget.objects.get_or_create(week_day=str(w.value))
             model.enable = enable
             model.target_json = target_json
             model.save()
+
+        syscon = SystemCondition.objects.get(id=1)
+        syscon.account = data['account']
+        syscon.pswd = data['pswd']
+        syscon.week_targets = ",".join(week_targets)
+        syscon.save()
 
     return JsonResponse({"status": 'ok'})
 

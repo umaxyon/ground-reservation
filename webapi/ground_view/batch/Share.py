@@ -145,7 +145,7 @@ class TargetRowHolder:
         self.dt = ''
         self.week_day = ''
 
-        if post_row['date'] != '':
+        if 'date' in post_row and post_row['date'] != '':
             y = post_row['date'][0:4]
             m = post_row['date'][4:6]
             d = post_row['date'][6:]
