@@ -1,6 +1,7 @@
 import datetime as dt
+import base64
+import os
 import re
-
 from datetime import timedelta
 from enum import Enum
 from typing import List
@@ -388,3 +389,7 @@ class DateTimeUtil(object):
                 ret.append(DateTimeUtil.to_str(day))
             day = day + timedelta(days=1)
         return ret
+
+
+def pass_decode(str_pass):
+    return base64.b64decode(str_pass).decode('utf-8').replace(os.environ['SALT'], '')
