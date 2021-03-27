@@ -57,7 +57,14 @@ const Settings: React.FC<any> = (props) => {
         dispatch(getSettings());
     }, [dispatch])
 
-    const strAvaivable = (ss.available === 1) ? '稼働中': '停止中';
+    let strAvailable = '';
+    let chipColor: "default" | "primary" | "secondary" | undefined;
+    switch (ss.available) {
+        case 1: strAvailable = '稼働中'; chipColor = 'primary'; break;
+        case 2: strAvailable = 'メンテ中'; chipColor = 'secondary'; break;
+        default: strAvailable = '停止中'; chipColor = 'default'; break;
+    }
+
     const isEditDisabled = (ss.available === 1) ? !isEdit : true;
 
     const handleClickSave = () => {
@@ -121,7 +128,7 @@ const Settings: React.FC<any> = (props) => {
                     <hr className={css.hrMargin}/>
                 </Grid>
                 <Grid item={true} style={{ height: '60px'}}>
-                    <b>システム稼働状況</b> : <Chip size="small" color="primary" label={strAvaivable} />
+                    <b>システム稼働状況</b> : <Chip size="small" color={chipColor} label={strAvailable} />
                 </Grid>
                 <Grid item={true}>
                     <Button variant="contained" color="secondary" startIcon={<NoteAddIcon />} disabled={isEditDisabled} onClick={handleClickSave}>
