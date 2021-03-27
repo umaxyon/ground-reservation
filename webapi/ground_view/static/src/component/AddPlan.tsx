@@ -16,7 +16,7 @@ import { TableIcons, TableLocalization } from './TableConst';
 import {
     initNewTarget,
     changeWatch,
-    cancelCloseTarget,
+    closeAndClearTarget,
     clearAllTarget, 
     openEditTarget,
     allTargetDateChange,
@@ -124,7 +124,7 @@ const AddPlan: React.FC<any> = (props) => {
     }
 
     const handleClickClose = () => {
-        dispatch(cancelCloseTarget({}))
+        dispatch(closeAndClearTarget({}))
     }
 
     const handleClickSave = () => {
