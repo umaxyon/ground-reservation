@@ -6,10 +6,10 @@ from ground_view.batch.Share import Area
 
 
 class Reserver:
-    def __init__(self, log, dao):
+    def __init__(self, log, dao, account, pswd):
         self.log = log
         self.dao = dao
-        self.scraper = Scraper(log, dao)
+        self.scraper = Scraper(log, dao, account, pswd)
 
         self.plans = []
         self.targets = []
