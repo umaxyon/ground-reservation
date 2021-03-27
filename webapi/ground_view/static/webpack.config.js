@@ -1,5 +1,6 @@
 const webpack = require('webpack');
 const path = require('path');
+const Dotenv = require('dotenv-webpack')
 
 
 const IS_DEVELOP = true;
@@ -50,12 +51,13 @@ const config = {
         }
     },
     plugins: [
+        new Dotenv(),
         new webpack.ProvidePlugin({
             Buffer: ['buffer', 'Buffer'],
         }),
         new webpack.ProvidePlugin({
             process: 'process/browser'
-        })
+        }),
     ]
 }
 
