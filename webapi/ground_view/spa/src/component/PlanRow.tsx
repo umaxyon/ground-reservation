@@ -124,7 +124,7 @@ const PlanRow: React.FC<any> = (props) => {
             <Grid container={true}>
                 <Grid item={true}>
                     <CardContent className={css.leftTitle}>
-                        <Typography variant="subtitle2" className={css.vcenter}>{plan.ymdFull()}</Typography>
+                        <Typography variant="subtitle2" className={css.vcenter}><b>{plan.ymdFull()}</b></Typography>
                     </CardContent>
                 </Grid>
                 <Grid item={true} xs={true}>
