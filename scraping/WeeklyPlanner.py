@@ -16,11 +16,12 @@ class WeeklyPlanner:
     def get_week_target(self):
         weekdays_csv = self.dao.get_week_targets()
         target_weekdays = DayOfWeek.from_csv(weekdays_csv)
-        targets_jsons = self.dao.get_weekly_target_json(target_weekdays)
-        for week in targets_jsons.keys():
-            if week in targets_jsons:
-                self.target_tmplates[week] = json.loads(targets_jsons[week])
-                self.target_weekdays.append(DayOfWeek(int(week)))
+        if target_weekdays is not None:
+            targets_jsons = self.dao.get_weekly_target_json(target_weekdays)
+            for week in targets_jsons.keys():
+                if week in targets_jsons:
+                    self.target_tmplates[week] = json.loads(targets_jsons[week])
+                    self.target_weekdays.append(DayOfWeek(int(week)))
 
     def target_date_range(self):
         last_plan = self.dao.find_last_plan_created_by_system()
