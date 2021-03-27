@@ -313,7 +313,7 @@ class DayOfWeek(Enum):
 
     @staticmethod
     def from_csv(val_csv: str):
-        return tuple([DayOfWeek(int(v)) for v in val_csv.split(',')])
+        return tuple([DayOfWeek(int(v)) for v in val_csv.split(',')]) if val_csv != '' else ()
 
     @classmethod
     def all(cls):
