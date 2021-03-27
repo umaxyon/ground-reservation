@@ -86,7 +86,7 @@ class Dao:
     @transaction
     def get_weekly_target_json(self, targets):
         param = [r.value for r in targets]
-        sql = 'SELECT * FROM ground_view_reservationweeklytarget WHERE week_day in (%s)'
+        sql = 'SELECT * FROM ground_view_reservationweeklytarget WHERE week_day in (%s) and enable = 1'
         sql = sql % ', '.join(map(lambda x: '%s', targets))
         self.cur.execute(sql, param)
         data = self.cur.fetchall()
