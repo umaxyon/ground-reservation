@@ -133,13 +133,16 @@ const SettingsSlice = createSlice({
             state.weeks = newWeeks;
             const oldWeekData = Object.assign({}, state.weekData);
             newWeeks.forEach(w => {
-                oldWeekData[w] = { enable: false, json: "" }
+                if (!(w in oldWeekData)) {
+                    oldWeekData[w] = { enable: false, json: "" }
+                }
             });
             state.weekData = oldWeekData;
         },
         changeWeekEnabled: (state, action) => {
             const { enable, week } = action.payload;
             state.weekData[week].enable = enable;
+            state.isEdit = true;
         },
         changeOpenTargetWeek: (state, action) => {
             state.openTaregeWeek = action.payload;
@@ -159,11 +162,17 @@ const SettingsSlice = createSlice({
             state.pswd = decrypt(action.payload.pswd);
             state.weekData = action.payload.weekData;
             state.weeks = action.payload.weeks;
+        },
+        callBackSaveSettings: (state, action) => {
+            state.isEdit = false;
         }
     },
     extraReducers: builder => {
         builder.addCase(getSettings.fulfilled, (state, action) => {
-            SettingsSlice.caseReducers.callBackGetSystemCondition(state, action)
+            SettingsSlice.caseReducers.callBackGetSystemCondition(state, action);
+        });
+        builder.addCase(saveSettings.fulfilled, (state, action) => {
+            SettingsSlice.caseReducers.callBackSaveSettings(state, action);
         });
     }
 });
