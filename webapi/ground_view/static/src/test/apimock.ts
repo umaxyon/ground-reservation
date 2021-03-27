@@ -1,5 +1,5 @@
 import * as Moxios from 'moxios';
-import data_system_condition from './serverdata/data_system_condition';
+import data_settings from './serverdata/data_settings';
 import data_get_plans from './serverdata/data_get_plans';
 import { IS_LOCAL } from '../modules/Constants';
 
@@ -43,7 +43,7 @@ const registerAll = () => {
         return
     }
 
-    registerStub('/ground_view/get_system_condition/', 200, { response: data_system_condition({}) });
+    registerStub('/ground_view/get_settings/', 200, { response: data_settings({}) });
     registerStub('/ground_view/get_plans/', 200, { response: data_get_plans({}) });
 }
 

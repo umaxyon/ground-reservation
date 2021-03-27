@@ -17,12 +17,15 @@ class GroundInfo(models.Model):
 
 class SystemCondition(models.Model):
     reg_on_off = RegexValidator(regex=r'[0-1]')
+    reg_account = RegexValidator(regex=r'\d+')
     reg_ymdhms = RegexValidator(regex=r'\d{4}/\d{2}/\d{2}_\d{2}:\d{2}:\d{2}')
 
     available = models.IntegerField('システム利用可否', validators=[reg_on_off])
     debug = models.IntegerField('デバッグモード', validators=[reg_on_off])
     week_targets = models.CharField('曜日ターゲット', max_length=20, default='')
     last_update = models.CharField('最終更新', max_length=19, validators=[reg_ymdhms])
+    account = models.CharField('アカウント', max_length=8, validators=[reg_account], default='')
+    pswd = models.CharField('パスワード', max_length=50, default='')
 
 
 class ReservationPlan(models.Model):
@@ -83,5 +86,9 @@ class ReservationTarget(models.Model):
 
 
 class ReservationWeeklyTarget(models.Model):
+    reg_on_off = RegexValidator(regex=r'[0-1]')
+
+    enable = models.IntegerField('有効無効', validators=[reg_on_off], default=0)
     week_day = models.CharField('曜日', max_length=1)
     target_json = models.CharField('ターゲット設定JSON', max_length=3000)
+

@@ -1,10 +1,11 @@
 from django.shortcuts import render
 from django.http.response import JsonResponse
 from django.views.decorators.csrf import ensure_csrf_cookie
-from ground_view.models import SystemCondition, ReservationPlan, ReservationTarget
+from ground_view.models import SystemCondition, ReservationPlan, ReservationTarget, ReservationWeeklyTarget
 import json
 from django.db import transaction
-from .batch.Share import PlanTargetHolder, TimeboxResolver, Stadium, Area, PlanStatus
+from .batch.Share import PlanTargetHolder, TimeboxResolver, Stadium, Area, PlanStatus, DayOfWeek
+
 
 # Create your views here.
 
@@ -15,13 +16,51 @@ def top(req):
 
 
 @ensure_csrf_cookie
-def get_system_condition(req):
+def get_settings(req):
     cond = SystemCondition.objects.all().get()
+    weekly_targets = ReservationWeeklyTarget.objects.all()
+    week_data = {
+        DayOfWeek(int(t.week_day)).to_japanese(): {
+            'enable': t.enable == 1,
+            'json': t.target_json
+        } for t in weekly_targets if t.target_json != ""}
+
     return JsonResponse({
-        "available": cond.available == 1,
+        "available": cond.available,
         "debug": cond.debug == 1,
-        "last_update": cond.last_update
+        "last_update": cond.last_update,
+        "week_targets": cond.week_targets,
+        "account": cond.account,
+        "pswd": cond.pswd,
+        "weekData": week_data,
+        "weeks": list(week_data.keys())
     })
+
+
+@ensure_csrf_cookie
+def save_settings(req):
+    data = json.loads(req.body.decode('utf-8'))
+
+    with transaction.atomic():
+        syscon = SystemCondition.objects.get(id=1)
+        syscon.account = data['account']
+        syscon.pswd = data['pswd']
+        syscon.save()
+
+        for w in DayOfWeek.all():
+            target_json = ''
+            enable = 0
+            if w.to_japanese() in data['weekData']:
+                wd = data['weekData'][w.to_japanese()]
+                target_json = wd['json']
+                enable = 1 if wd['enable'] else 0
+
+            model, _ = ReservationWeeklyTarget.objects.get_or_create(week_day=w.value)
+            model.enable = enable
+            model.target_json = target_json
+            model.save()
+
+    return JsonResponse({"status": 'ok'})
 
 
 @ensure_csrf_cookie
