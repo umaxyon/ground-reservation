@@ -1,6 +1,7 @@
 import { configureStore, getDefaultMiddleware } from '@reduxjs/toolkit';
 import PlanListSlice from './modules/PlanListSlice';
 import TargetsSlice from './modules/TargetsSlice';
+import SettingsSlice from './modules/SettingsSlice';
 
 
 const logger = (store: { getState: () => any; }) => (next: (arg0: any) => void) => (action: any) => {
@@ -12,7 +13,8 @@ const logger = (store: { getState: () => any; }) => (next: (arg0: any) => void) 
 const store = configureStore({
     reducer: {
         PlanListSlice,
-        TargetsSlice
+        TargetsSlice,
+        SettingsSlice
     },
     // middleware: (getDefaultMiddleware) => getDefaultMiddleware().concat(logger),
 });
