@@ -9,7 +9,9 @@ import { MuiPickersUtilsProvider } from '@material-ui/pickers';
 import DateFnsUtils from '@date-io/date-fns';
 import jaLocale from "date-fns/locale/ja"
 import format from "date-fns/format";
+import dotenv from "dotenv";
 
+dotenv.config();
 class ExtendedUtils extends DateFnsUtils {
     getCalendarHeaderText(date: number|Date) {
       return format(date, "yyyy年MMM", { locale: this.locale });
