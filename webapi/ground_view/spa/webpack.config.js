@@ -2,8 +2,10 @@ const webpack = require('webpack');
 const path = require('path');
 const Dotenv = require('dotenv-webpack')
 
-
+const IS_LOCAL = false;
 const IS_DEVELOP = true;
+
+const outputPath = IS_LOCAL ? path.join(__dirname, 'dist') : path.join(path.resolve(__dirname, '..'), 'static', 'dist')
 
 const config = {
     mode: IS_DEVELOP ? 'development': 'production',
@@ -14,7 +16,7 @@ const config = {
     },
     entry: './index.tsx',
     output: {
-        path: path.join(__dirname, 'dist'),
+        path: outputPath,
         filename: 'bundle.js',
 
     },
