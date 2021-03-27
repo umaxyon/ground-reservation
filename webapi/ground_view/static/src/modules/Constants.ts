@@ -84,3 +84,12 @@ export const STADIUM_KEYS: Map<string, string> = new Map(Object.entries({
     '萩中公園': 'haginaka',
     '多摩川緑地': 'tamagawa', '六郷橋緑地': 'rokugobashi', '大師橋緑地': 'taisibashi', 'ｶﾞｽ橋緑地': 'gasubashi'
 }))
+
+
+export const WEEK: string[] = [
+    '月', '火', '水', '木', '金', '土', '日'
+]
+
+export const WEEK_KEYS = new Map(Object.entries({
+    '月': 'mon', '火': 'tue', '水': 'wed', '木': 'thu', '金': 'fri', '土': 'sat', '日': 'san'
+}))
