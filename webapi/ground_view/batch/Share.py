@@ -123,7 +123,7 @@ def get_weekday(year, month, day):
 
 
 class CalDay:
-    def __init__(self, year, month, day, is_current_day, td):
+    def __init__(self, year, month, day, is_current_day=None, td=None):
         self.year = year
         self.month = month
         self.day = day
@@ -250,8 +250,14 @@ class Plan(ReservationModel):
 
 
 class Target(ReservationModel):
+    KEYS = {
+        'id': 0, 'status': 1, 'ym': 2, 'dt': 3, 'week_day': 4, 'area': 5,
+        'gname': 6, 'timebox': 7, 'plan_id': 8, 'gno': 9, 'gno_csv': 10
+    }
+
     def __init__(self, dao, dat):
         super().__init__(dao)
+        self._dat = dat
         self.id = dat[0]
         self.status = dat[1]
         self.ym = dat[2]
@@ -286,6 +292,9 @@ class Target(ReservationModel):
             f'{self.area} {self.gname}[{self.gno_csv if self.gno_csv is not None else "all"}] '
             f'tm={self.timebox} p={self.plan_id})'
         )
+
+    def __getitem__(self, item):
+        return self._dat[Target.KEYS[item]]
 
 
 class DayOfWeek(Enum):
