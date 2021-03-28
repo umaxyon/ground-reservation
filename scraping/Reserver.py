@@ -2,7 +2,28 @@ import itertools
 from ReservationCalender import ReservationCalender
 from Scraper import Scraper
 from GrandInfo import GrandInfo
-from ground_view.batch.Share import Area
+from ground_view.batch.Share import CalDay
+
+
+class TargetGroupIterator:
+    def __init__(self, target_list, group_key):
+        self.group_key = group_key
+        self._target_list = sorted(target_list, key=lambda x: x[group_key])
+        self._g_list = []
+        for k, grp in itertools.groupby(self._target_list, key=lambda x: x[group_key]):
+            self._g_list.append((k, list(grp)))
+        self._i = 0
+
+    def __iter__(self):
+        return self
+
+    def __next__(self):
+        if self._i == len(self._g_list):
+            raise StopIteration()
+
+        ret = self._g_list[self._i]
+        self._i += 1
+        return ret
 
 
 class Reserver:
@@ -18,59 +39,61 @@ class Reserver:
         self.plans = self.dao.get_available_plans()
         self.targets = list(itertools.chain.from_iterable([p.get_targets(force=True) for p in self.plans]))
 
-    async def exec_reservation(self, cal, targets):
+    async def commit_reserve(self, info):
+        await info.click_reservation_next_button()
+        if not await info.select_mokuteki():
+            await info.click_reservation_back_button()
+            return
+
+        await info.click_submit_reservation()  # 予約確定
+        no = await info.get_reservation_no()
+        reserve_data = await info.get_reservation_datas()
+        self.log.info(f'[予約確定] 予約no={no}')
+
+        await info.click_continue_application()  # 申し込みを続ける
+        return reserve_data
+
+    async def process_try_reservation_to_day(self, cal, ym, dt, targets):
         info = GrandInfo(self.scraper)
-        await cal.describe_calender()
-        self.log.debug(f"[{cal.year}年{cal.month:0>2}月]")
-        this_month_targets = [t[1] for t in targets if f"{cal.year}{cal.month:0>2}" == t[0]]
+        await cal.click_day(CalDay(int(str(ym)[0:4]), int(str(ym)[4:6]), dt))
 
-        ret = []
-        for t in this_month_targets:
-            match_days = await cal.get_match_days(t)
-            self.log.debug(f"カレンダー空き日マッチ日数: {len(match_days)}日")
-            for d in match_days:
-                await cal.click_day(d)
-                click_cnt = await info.click_abailable_target_btn(t)
-                self.log.debug(f"ターゲットクリック数: {click_cnt}")
+        clicked_list = []
+        for timebox, t_grp_tm in TargetGroupIterator(targets, "timebox"):
 
-                if click_cnt > 0:
-                    await info.click_reservation_next_button()
-                    if not await info.select_mokuteki():
-                        await info.click_reservation_back_button()
-                        continue
+            # TODO t_grp_tm の球場優先順ソート
+            for t in t_grp_tm:
+                clicked_tpl = await info.click_target_btn_at_one_choice(timebox, t)
+                if clicked_tpl is not None:
+                    clicked_list.append(clicked_tpl)
+                    break  # この時間帯で1個押せたら次の時間帯へ。
 
-                    await info.click_submit_reservation()  # 予約確定
-                    no = await info.get_reservation_no()
-                    reserve_data = await info.get_reservation_datas()
-                    ret.extend(reserve_data)
-                    self.log.info(f'[予約確定] 予約no={no}')
+        if len(clicked_list) > 0:
+            self.log.debug(f"[{ym}{dt}] 選択: {[f'{t[0]}_{t[1]}(tm={t[2]})' for t in clicked_list]}")
+            return await self.commit_reserve(info)
 
-                    await info.click_continue_application()  # 申し込みを続ける
-        return ret
-
-    def update_reserve_result(self, results):
-        pass
+        return []
 
     async def run(self):
         self.initialize_plan()
-        target_areas = Area.in_targets(self)
-
         await self.scraper.get_init_page()
 
         all_reserved = []
-        for area in target_areas:
-            self.log.debug(f"エリア: {area.nm}")
+        for area, t_grp_area in TargetGroupIterator(self.targets, "area"):
             await self.scraper.move_baseball_reserve_top()
-            await self.scraper.click_ground_area_button(area.id)
+            await self.scraper.click_ground_area_button(area)
             await self.scraper.login()
 
-            cur_area_targets = [(f"{t.ym}", t) for t in self.targets if t.area == area.nm]
+            for ym, t_grp_ym in TargetGroupIterator(t_grp_area, 'ym'):
+                cal = await ReservationCalender(self.scraper).describe_calender()
+                await cal.fit_month(ym)
 
-            while True:
-                cal = ReservationCalender(self.scraper)
+                for dt, t_grp_dt in TargetGroupIterator(t_grp_ym, 'dt'):
+                    if cal.is_open_day(ym, dt):
+                        self.log.debug(f"[{area}] {str(ym)[0:4]}年{str(ym)[4:6]}月{dt:0>2}日 open try.")
 
-                reserve_data = await self.exec_reservation(cal, cur_area_targets)
-                all_reserved.extend(reserve_data)
+                        # エリア、年月日で絞ったターゲットで予約トライ
+                        reserve_data = await self.process_try_reservation_to_day(cal, ym, dt, t_grp_dt)
+                        all_reserved.extend(reserve_data)
 
                 await cal.click_next_month()  # 翌月
                 if await cal.is_not_next_page():
@@ -78,3 +101,6 @@ class Reserver:
                     break
 
         self.update_reserve_result(all_reserved)
+
+    def update_reserve_result(self, all_reserved):
+        self.log.debug(all_reserved)

@@ -1,7 +1,7 @@
 import os
 from distutils.util import strtobool
 from pyppeteer import launch
-from ground_view.batch.Share import pass_decode
+from ground_view.batch.Share import pass_decode, Area
 
 
 OOMORI = 0
@@ -57,7 +57,8 @@ class Scraper:
         await baseball_btn.click()
         await self.page.waitForNavigation()
 
-    async def click_ground_area_button(self, num):
+    async def click_ground_area_button(self, area_nm):
+        num = Area.nm_of(area_nm).id
         btns = await self.page.JJ('.btnlr')
         await btns[num].click()
         await self.page.waitForNavigation()

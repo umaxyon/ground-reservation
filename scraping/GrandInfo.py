@@ -1,6 +1,6 @@
+import itertools
 from ground_view.batch.Share import Stadium
 from ground_view.batch.Share import DateTimeUtil as Du
-
 
 unsupported = {
     'ｶﾞｽ橋緑地_5': 'selectboxに軟式野球が無い'
@@ -41,6 +41,32 @@ class GrandInfo:
 
     def check_unsupported_target(self, target, gno):
         return f'{target.gname}_{gno}' in unsupported.keys()
+
+    async def get_all_tr_rows(self):
+        trs = await self.get_trs()  # 全行
+        all_rows = []
+        for rownum, tr in enumerate(trs):
+            tds = await self.get_tds(rownum)
+            gname, gno = await self.get_name(tds[0])
+            all_rows.append((rownum, gname, gno, tds))
+        return all_rows
+
+    async def click_target_btn_at_one_choice(self, timebox, target):
+        all_rows = await self.get_all_tr_rows()
+        gname_grp_trs = {x[0]: tuple(x[1]) for x in itertools.groupby(all_rows, lambda r: r[1])}  # スタジアムでグループしたtrs
+
+        # TODO 号面優先順でのソート
+        for rownum, name, gno, tds in gname_grp_trs.get(target.gname):
+            if self.check_unsupported_target(target, gno) or not target.is_target_gno(gno):
+                continue
+
+            btn = await tds[timebox + 2].J('input[type=button]')
+            if btn is not None:
+                await btn.click()
+                await self.scraper.page.waitForNavigation()
+                return name, gno, timebox
+
+        return None
 
     async def click_abailable_target_btn(self, target):
         trs = await self.get_trs()
