@@ -63,6 +63,7 @@ def schedule(interval, wait=True):
             time.sleep(next_tm)
         else:
             log.info('system not available. exit.')
+            break
 
 
 if __name__ == "__main__":
