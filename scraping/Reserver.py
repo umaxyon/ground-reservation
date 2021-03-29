@@ -1,8 +1,8 @@
 import itertools
 from ReservationCalender import ReservationCalender
 from Scraper import Scraper
-from GrandInfo import GrandInfo
-from ground_view.batch.Share import CalDay
+from GrandInfo import GrandInfo, get_goumen_num
+from ground_view.batch.Share import CalDay, Stadium, TimeboxResolver
 
 
 class TargetGroupIterator:
@@ -51,7 +51,7 @@ class Reserver:
         self.log.info(f'[予約確定] 予約no={no}')
 
         await info.click_continue_application()  # 申し込みを続ける
-        return reserve_data
+        return [(*r, no) for r in reserve_data]
 
     async def process_try_reservation_to_day(self, cal, ym, dt, targets):
         info = GrandInfo(self.scraper)
@@ -104,3 +104,25 @@ class Reserver:
 
     def update_reserve_result(self, all_reserved):
         self.log.debug(all_reserved)
+
+        for day, stadium_nm, goumen, times, fee, reserve_no in all_reserved:
+            t_month = int(day[4:6])
+            stadium = Stadium.full_nm_of(stadium_nm)
+            time_ptn = TimeboxResolver(stadium).get(t_month)
+
+            for timebox in times:
+                target = self.dao.get_target_from_result_data(day, stadium.nm, time_ptn.index(timebox))
+
+                goumen = get_goumen_num(goumen)
+                if goumen not in target.gno_csv.split(','):
+                    self.log.info(f'ターゲットに無い号面が予約された: [{day}][{stadium_nm}][{timebox} goumen={goumen}')
+
+                reserve_list = target.reserve_gno_csv.split(',') if target.reserve_gno_csv != '' else []
+                reserve_list.append(goumen)
+
+                target.status = '予約有'
+                target.reserve_gno_csv = ','.join(reserve_list)
+
+                # 保存
+                self.dao.tx_save_reserve_result(target, reserve_no, goumen)
+                self.log.debug(f'結果保存: 予約No{reserve_no} target_id={target.id}')

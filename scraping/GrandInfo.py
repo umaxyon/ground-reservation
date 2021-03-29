@@ -12,6 +12,10 @@ summer_time_table = ['08-10', '10-12', '12-14', '14-16', '16-18']
 ZEN_HAN_TRANS = str.maketrans({chr(0xFF01 + i): chr(0x21 + i) for i in range(94)})
 
 
+def get_goumen_num(str_goumen):
+    return str_goumen.translate(ZEN_HAN_TRANS).replace('号面', '')
+
+
 class GrandInfo:
     def __init__(self, scraper):
         self.scraper = scraper
@@ -28,7 +32,7 @@ class GrandInfo:
         # name = name_map[buf[0]] if buf[0] in name_map else buf[0]
         if len(buf) == 2:
             goumen = buf[1] if buf[1] != '野球場' else '1'
-            return st.nm, goumen.translate(ZEN_HAN_TRANS).replace('号面', '')
+            return st.nm, get_goumen_num(goumen)
         else:
             return st.nm, ''
 
@@ -138,11 +142,13 @@ class GrandInfo:
             times = await self.page.evaluate('elm => elm.innerHTML', tds[3])
             fee = await self.page.evaluate('elm => elm.innerHTML', tds[5])
 
+            stadium_nm, goumen = stadium.split('_')
+
             day = Du.to_str(Du.from_str_jp(day))
-            stadium = Stadium.full_nm_of(stadium.split('_')[0])
+            stadium = Stadium.full_nm_of(stadium_nm)
             times = [f"{r.split('-')[0][:2]}-{r.split('-')[1][:2]}" for r in times.split(' ') if r != '']
 
-            ret.append((day, stadium, times, fee))
+            ret.append((day, stadium_nm, goumen, times, fee))
         return ret
 
     async def select_mokuteki(self):

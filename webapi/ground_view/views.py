@@ -130,7 +130,8 @@ def get_targets(req):
         'areas': [],
         'stadiums': {},
         'times': {},
-        'goumens': {}
+        'goumens': {},
+        'reserved': {}
     }
     for area in Area.members():
         ret['stadiums'][area.nm] = []
@@ -141,7 +142,7 @@ def get_targets(req):
             .order_by('timebox').order_by('gname').order_by('area')
 
         ret['date'] = date
-        buf = {'area': '', 'gname': '', 'timebox': '', 'goumens': ''}
+        buf = {'area': '', 'gname': '', 'timebox': '', 'goumens': '', 'reserved': ''}
         time_resolver = None
         for t in items:
             if buf['area'] != t.area:
@@ -150,10 +151,14 @@ def get_targets(req):
                 ret['areas'].append(t.area)
                 ret['stadiums'][t.area] = []
                 ret['goumens'][t.area] = {}
+                ret['reserved'][t.area] = {}
                 ret['times'][t.area] = {}
 
             if buf['gname'] != t.gname:
                 buf['gname'] = t.gname
+
+                ret['reserved'][t.area][t.gname] = {}
+
                 time_resolver = TimeboxResolver(Stadium.nm_of(t.gname))
 
                 if t.gname not in ret['stadiums'][t.area]:
@@ -167,7 +172,12 @@ def get_targets(req):
 
             if buf['timebox'] != t.timebox:
                 buf['timebox'] = t.timebox
-                ret['times'][t.area][t.gname].append(time_resolver.get()[t.timebox])
+                tm = time_resolver.get(t.month())[t.timebox]
+                ret['times'][t.area][t.gname].append(tm)
+
+                if buf['reserved'] != t.reserve_gno_csv:
+                    buf['reserved'] = t.reserve_gno_csv
+                    ret['reserved'][t.area][t.gname][tm] = t.reserve_gno_csv.split(',')
 
     except ReservationTarget.DoesNotExist or ReservationPlan.DoesNotExist:
         ret = {}
