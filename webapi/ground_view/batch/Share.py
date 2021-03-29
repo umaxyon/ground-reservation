@@ -32,19 +32,21 @@ class PlanStatus(Enum):
 time_ptn = {
     1: ['07-09', '09-11', '11-13', '13-15', '15-17'],
     2: ['07-09', '09-11', '11-13', '13-15', '15-17', '17-19', '19-21'],
-    3: ['08-10', '10-12', '12-14', '14-16']
+    3: ['08-10', '10-12', '12-14', '14-16'],
+    4: ['06-08', '08-10', '10-12', '12-14', '14-16', '16-18'],
+    5: ['09-11', '11-13', '13-15', '15-17', '17-19', '19-21']
 }
 
 timebox_table = {
-    '昭和島運動場': {0: time_ptn[1]},
-    '平和島公園': {0: time_ptn[1]},
-    '大田ｽﾀｼﾞｱﾑ': {0: time_ptn[2]},
-    '東調布公園': {0: time_ptn[3]},
-    '萩中公園': {0: time_ptn[3]},
-    '多摩川緑地': {0: time_ptn[1]},
-    '六郷橋緑地': {0: time_ptn[1]},
-    '大師橋緑地': {0: time_ptn[1]},
-    'ｶﾞｽ橋緑地': {0: time_ptn[1]}
+    '昭和島運動場': {0: time_ptn[1], 1: time_ptn[4]},
+    '平和島公園': {0: time_ptn[1], 1: time_ptn[4]},
+    '大田ｽﾀｼﾞｱﾑ': {0: time_ptn[2], 1: time_ptn[2]},
+    '東調布公園': {0: time_ptn[3], 1: time_ptn[5]},
+    '萩中公園': {0: time_ptn[3], 1: time_ptn[2]},
+    '多摩川緑地': {0: time_ptn[1], 1: time_ptn[4]},
+    '六郷橋緑地': {0: time_ptn[1], 1: time_ptn[4]},
+    '大師橋緑地': {0: time_ptn[1], 1: time_ptn[4]},
+    'ｶﾞｽ橋緑地': {0: time_ptn[1], 1: time_ptn[4]}
 }
 
 
@@ -52,8 +54,10 @@ class TimeboxResolver:
     def __init__(self, stadium):
         self.stadium = stadium
 
-    def get(self):
-        return timebox_table[self.stadium.nm][0]
+    def get(self, month):
+        # TODO 4月からいつまで同じ日付パターンなのか不明。
+        time_idx = 0 if month <= 3 else 1
+        return timebox_table[self.stadium.nm][time_idx]
 
 
 class Stadium(Enum):
@@ -76,8 +80,8 @@ class Stadium(Enum):
         v = [v for v in Stadium.members() if v.full_nm == full_nm]
         return v[0] if len(v) == 1 else None
 
-    def timebox(self) -> List:
-        return TimeboxResolver(self).get()
+    def timebox(self, month) -> List:
+        return TimeboxResolver(self).get(month)
 
     SHOWAJIMA = (0, '昭和島運動場野球場', '昭和島運動場')
     HEIWAJIMA = (1, '平和島公園野球場', '平和島公園')
@@ -158,7 +162,7 @@ class TargetRowHolder:
         self.status = '未予約'
         self.area = post_row['area']
         self.gname = self.stadium.nm
-        self.timebox = self.stadium.timebox().index(post_row['time'])
+        self.timebox = self.stadium.timebox(int(m)).index(post_row['time'])
         self.goumens = post_row['goumen'] or []
         self.reserve_gno_csv = ""
 
@@ -252,7 +256,7 @@ class Plan(ReservationModel):
 class Target(ReservationModel):
     KEYS = {
         'id': 0, 'status': 1, 'ym': 2, 'dt': 3, 'week_day': 4, 'area': 5,
-        'gname': 6, 'timebox': 7, 'plan_id': 8, 'gno': 9, 'gno_csv': 10
+        'gname': 6, 'timebox': 7, 'plan_id': 8, 'gno': 9, 'gno_csv': 10, 'reserve_gno_csv': 11
     }
 
     def __init__(self, dao, dat):
@@ -267,8 +271,8 @@ class Target(ReservationModel):
         self.gname = dat[6]
         self.timebox = dat[7]
         self.plan_id = dat[8]
-        self.gno = dat[9]
-        self.gno_csv = dat[10]
+        self.gno_csv = dat[9]
+        self.reserve_gno_csv = dat[10]
 
     @property
     def year(self):
