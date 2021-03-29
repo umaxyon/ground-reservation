@@ -74,6 +74,17 @@ class Dao:
         return [Target(self, d) for d in data]
 
     @transaction
+    def get_target_from_result_data(self, day, gname, timebox) -> Target:
+        ym, dt = int(day[:6]), int(day[6:8])
+
+        self.cur.execute(
+            ('select * from ground_view_reservationtarget '
+             'WHERE ym = %s and dt = %s and gname = %s and timebox = %s'),
+            [ym, dt, gname, timebox])
+        data = self.cur.fetchone()
+        return Target(self, data) if data is not None else None
+
+    @transaction
     def find_last_plan_created_by_system(self):
         self.cur.execute((
             'select * from ground_view_reservationplan '
@@ -112,3 +123,25 @@ class Dao:
     def delete_targets_and_plan(self, pid):
         self.cur.execute('delete from ground_view_reservationtarget where plan_id = %s', [pid])
         self.cur.execute('delete from ground_view_reservationplan where id = %s', [pid])
+
+    @transaction
+    def tx_save_reserve_result(self, t: Target, reserve_no, g_no):
+        # 1トランでターゲット・プラン更新、resevation_result追加を行う
+
+        self.cur.execute(
+            ('update ground_view_reservationtarget set '
+             'status = %s, ym = %s, dt = %s, week_day = %s, area = %s, '
+             'gname = %s, timebox = %s, gno_csv = %s, reserve_gno_csv = %s '
+             'where id = %s'),
+            [t.status, t.ym, t.dt, t.week_day, t.area, t.gname, t.timebox, t.gno_csv, t.reserve_gno_csv, t.id])
+
+        reserved_cnt = len(t.reserve_gno_csv.split(',')) if t.reserve_gno_csv != '' else 0
+        self.cur.execute(
+            'update ground_view_reservationplan set reserved_cnt = %s where id = %s',
+            [reserved_cnt, t.plan_id])
+
+        self.cur.execute((
+            "insert into ground_view_reservationresult(reserve_no, g_no, timebox, target_id) "
+            "values(%s, %s, %s, %s)"
+        ), [reserve_no, g_no, t.timebox, t.id])
+
