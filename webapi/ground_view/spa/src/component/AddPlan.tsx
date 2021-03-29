@@ -84,6 +84,7 @@ const AddPlan: React.FC<any> = (props) => {
     const plans = ps.plans.map(p => p.ymd_range)
     const planedDays = Array.from(new Set(([] as string[]).concat(...plans)))
     let pickerDate = ps.pickerDate || format(startDay, 'yyyyMMdd');
+    const pickerMonth = parse(pickerDate, 'yyyyMMdd', dt).getMonth() + 1;
 
     const targets = ts.targets.slice().sort((a, b) => (a.date === b.date) ? 0 : (a.date < b.date) ? -1 : 1);
     const itemList = convertTargetList(targets);
@@ -113,7 +114,7 @@ const AddPlan: React.FC<any> = (props) => {
     const handleClickOpen = () => {
         dispatch(changePickerDate({date: pickerDate }));
         if (existsTarget === 'add') {
-            dispatch(initNewTarget({areas: ['蒲田'], date: pickerDate}));
+            dispatch(initNewTarget({areas: ['蒲田'], date: pickerDate, pickerMonth}));
         } else {
             dispatch(openEditTarget(pickerDate));
         }
@@ -204,7 +205,8 @@ const AddPlan: React.FC<any> = (props) => {
                             { title: 'エリア', field: 'area', cellStyle },
                             { title: '球場', field: 'stadium', cellStyle },
                             { title: '時間帯', field: 'time', cellStyle },
-                            { title: '号面数', field: 'goumen', searchable: false, cellStyle }
+                            { title: '号面数', field: 'goumen', searchable: false, cellStyle },
+                            { title: '予約済み数', field: 'reserved', searchable: false, cellStyle }
                         ]}
                         components={{
                             Toolbar: props => (

@@ -4,8 +4,8 @@ import { AppDispatch, RootState } from '../store';
 import {
     AREAS,
     STADIUMS_DEFAULT_SELECT,
-    TIME_RANGES_DEFAULT_SELECT,
-    GOUMENS_DEFAULT_SELECT
+    GOUMENS_DEFAULT_SELECT,
+    TimeResolver
 } from "./Constants";
 import {
     planDateInit
@@ -27,6 +27,14 @@ export interface IStadium {
     [key: string]: string[]
 }
 
+export interface IReserved {
+    [key: string]: {
+        [key: string]: {
+            [key: string]: string[]
+        }
+    }
+}
+
 export interface GoumenDialog {
     open: boolean,
     area: string,
@@ -44,7 +52,8 @@ export interface Target {
     areas: string[],
     stadiums: IStadium,
     times: ITimes,
-    goumens: IGoumen
+    goumens: IGoumen,
+    reserved: IReserved,
     total: number
 }
 
@@ -71,6 +80,7 @@ const condition: Target = {
     stadiums: initStadiumsOb(),
     times: {},
     goumens: {},
+    reserved: {},
     total: 0
 }
 
@@ -115,18 +125,18 @@ const getAddedDiffListForStadium = (state: any, area: string, newStadiums: strin
     return (stadiums) ? newStadiums.filter(k => ! (stadiums.includes(k))) : newStadiums;
 }
 
-const adjustGoumenTimesForArea = (state: any, newArea: string[]) => {
+const adjustGoumenTimesForArea = (state: any, newArea: string[], pickerMonth: number) => {
     const oldAreas: string[] = state.condition.areas;
     // 追加されたエリアの号面と時間帯に初期値投入
     newArea.filter(k => ! (oldAreas.includes(k))).forEach(k => {
         adjustGoumenForStudium(state, k, STADIUMS_DEFAULT_SELECT[k]);
-        adujustTimesForStudium(state, k, STADIUMS_DEFAULT_SELECT[k]);
+        adujustTimesForStudium(state, k, STADIUMS_DEFAULT_SELECT[k], pickerMonth);
         state.condition.stadiums[k] = STADIUMS_DEFAULT_SELECT[k];
     });
     // 削除された球場の豪面と時間帯クリア
     oldAreas.filter(k => ! (newArea.includes(k))).forEach(deletedArea => {
         adjustGoumenForStudium(state, deletedArea, []);
-        adujustTimesForStudium(state, deletedArea, []);
+        adujustTimesForStudium(state, deletedArea, [], pickerMonth);
         state.condition.stadiums[deletedArea] = []
     });
 }
@@ -146,12 +156,12 @@ const adjustGoumenForStudium = (state: any, area: string, newStadiums: string[])
     });
 }
 
-const adujustTimesForStudium =(state: any, area: string, newStadiums: string[]) => {
+const adujustTimesForStudium =(state: any, area: string, newStadiums: string[], pickerMonth: number) => {
     state.condition.times[area] = state.condition.times[area] || {};
 
     // 追加された球場の時間帯初期値投入
     getAddedDiffListForStadium(state, area, newStadiums).forEach(stadium => {
-        state.condition.times[area][stadium] = TIME_RANGES_DEFAULT_SELECT[stadium]
+        state.condition.times[area][stadium] = new TimeResolver(stadium).get_default(pickerMonth);
     });
 
     // 削除された球場の時間帯クリア
@@ -181,13 +191,14 @@ const TargetsSlice = createSlice({
     reducers: {
         initNewTarget: (state, action) => {
             const areas: string[] = action.payload.areas;
+            const pickerMonth: number = action.payload.pickerMonth;
             state.condition.areas = areas;
             areas.map(area => {
                 state.condition.stadiums[area] = [...STADIUMS_DEFAULT_SELECT[area]];
                 state.condition.times[area] = {};
                 state.condition.goumens[area] = {};
                 state.condition.stadiums[area].map(stadium => {
-                    state.condition.times[area][stadium] = TIME_RANGES_DEFAULT_SELECT[stadium];
+                    state.condition.times[area][stadium] = new TimeResolver(stadium).get_default(pickerMonth);
                     state.condition.goumens[area][stadium] = GOUMENS_DEFAULT_SELECT[stadium];
                 });
             });
@@ -213,19 +224,21 @@ const TargetsSlice = createSlice({
             state.watchStart = action.payload
         },
         changeTargetArea: (state, action) => {
-            const newArea: string[] = action.payload;
+            const newArea: string[] = action.payload.area;
+            const pickerMonth: number = action.payload.pickerMonth;
 
-            adjustGoumenTimesForArea(state, newArea)
+            adjustGoumenTimesForArea(state, newArea, pickerMonth);
 
             state.condition.areas = newArea;
             state.condition.total = countGoumens(state.condition);
         },
         changeTargetStadium: (state, action) => {
             const area: string = action.payload.area;
+            const pickerMonth = action.payload.pickerMonth
             const newStadiums: string[] = action.payload.value;
 
             adjustGoumenForStudium(state, area, newStadiums);
-            adujustTimesForStudium(state, area, newStadiums);
+            adujustTimesForStudium(state, area, newStadiums, pickerMonth);
 
             state.condition.stadiums[area] = newStadiums;
             state.condition.total = countGoumens(state.condition);

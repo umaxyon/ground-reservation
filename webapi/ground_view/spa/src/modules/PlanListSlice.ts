@@ -85,7 +85,11 @@ export const convertTargetList = (targets: Target[]) => {
             Object.keys(t.times[area]).forEach((stadium, k) => {
                 const goumen = t.goumens[area][stadium].length;
                 t.times[area][stadium].forEach((time, l) => {
-                    itemList.push({ area, stadium, time, goumen})
+                    let reserved = 0;
+                    if (t.reserved[area] && t.reserved[area][stadium] && t.reserved[area][stadium][time]) {
+                        reserved = t.reserved[area][stadium][time].length;
+                    }
+                    itemList.push({ area, stadium, time, goumen, reserved })
                 })
             });
         });

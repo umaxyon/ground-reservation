@@ -20,7 +20,7 @@ import {
 import { createWeekTargetAndClose } from '../modules/SettingsSlice';
 import ScrollDiv from './ScrollDiv';
 import GridOnIcon from '@material-ui/icons/GridOn';
-import { AREAS, AREA_KEYS, STADIUMS, STADIUM_KEYS, GOUMENS, TIME_RANGES } from '../modules/Constants';
+import { AREAS, AREA_KEYS, STADIUMS, STADIUM_KEYS, GOUMENS, TimeResolver } from '../modules/Constants';
 import { AlertDialog } from './Dialogs';
 
 const timeSelectWidth = 335
@@ -95,6 +95,7 @@ const AddTarget: React.FC<any> = (props) => {
     const strMode = (mode === 'edit' || mode === 'week') ? '編集' : '追加';
     const pickerDate = useAppSelector(st => st.PlanListSlice.pickerDate);
     const pDate = (pickerDate) ? parse(pickerDate, 'yyyyMMdd', dt) : addDays(dt, 3);
+    const pickerMonth = pDate.getMonth() + 1;
 
     const selectedAreas = useAppSelector(st => st.TargetsSlice.condition.areas) || [];
     const selectedStadiumOb = useAppSelector(st => st.TargetsSlice.condition.stadiums);
@@ -107,11 +108,11 @@ const AddTarget: React.FC<any> = (props) => {
     const week = useAppSelector(st => st.SettingsSlice.openTaregeWeek);
 
     const handleAreaChange = (event: React.ChangeEvent<{ value: unknown }>) => {
-        dispatch(changeTargetArea(event.target.value));
+        dispatch(changeTargetArea({ area: event.target.value, pickerMonth }));
     }
 
     const handleStadiumChange = (area: string) => (event: React.ChangeEvent<{ value: unknown }>) => {
-        dispatch(changeTargetStadium({area, value:event.target.value}));
+        dispatch(changeTargetStadium({area, value:event.target.value, pickerMonth }));
     }
 
     const handleTimeChange = (area: string, stadium: string) => (event: React.ChangeEvent<{ value: unknown }>) => {
@@ -192,7 +193,8 @@ const AddTarget: React.FC<any> = (props) => {
 
         const stadiumGrid = selectedStadiums.map((stadium: string) => {
             const k = STADIUM_KEYS.get(stadium);
-            const timeVals = TIME_RANGES.get(stadium);
+            const timeResolver = new TimeResolver(stadium)
+            const timeVals = timeResolver.get(pickerMonth);
             const buf = (area in selectedTimesOb) ? selectedTimesOb[area]: {};
             const selectedTimes = (stadium in buf) ? buf[stadium]: [];
             const cntGoumen = countSelectGoumen(area, stadium, selectedGoumensOb);
