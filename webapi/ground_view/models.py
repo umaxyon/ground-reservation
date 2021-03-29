@@ -80,9 +80,20 @@ class ReservationTarget(models.Model):
         ) for th in dat.targets]
         ReservationTarget.objects.bulk_create(targets)
 
+    def month(self):
+        return int(f"{self.ym}"[4:6])
+
     def __str__(self):
         return (f"{self.status} {self.ym}{self.dt} {self.plan_id} {self.area} {self.gname} {self.timebox} "
                 f"{self.gno_csv} {self.reserve_gno_csv}")
+
+
+class ReservationResult(models.Model):
+    target = models.ForeignKey(ReservationTarget, on_delete=models.CASCADE, null=True)
+
+    reserve_no = models.IntegerField('予約番号', validators=[MaxLengthValidator(8)])
+    g_no = models.CharField('号面', max_length=1, default=None)
+    timebox = models.IntegerField('時間帯', validators=[MaxLengthValidator(2)], default=None)
 
 
 class ReservationWeeklyTarget(models.Model):
