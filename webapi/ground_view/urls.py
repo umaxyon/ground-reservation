@@ -1,9 +1,10 @@
-from django.urls import path
+from django.urls import path, re_path
 
 from ground_view import views
 
 urlpatterns = [
     path('', views.top, name="top"),
+    path('do_login/', views.do_login, name="do_login"),
     path('get_settings/', views.get_settings, name="get_settings"),
     path('get_plans/', views.get_plans, name="get_plans"),
     path('watch_change/', views.watch_change, name="watch_change"),
@@ -13,4 +14,5 @@ urlpatterns = [
     path('save_plan/', views.save_plan, name="save_plan"),
     path('delete_plan/', views.delete_plan, name="delete_plan"),
     path('save_settings/', views.save_settings, name="save_settings"),
+    re_path('.*/', views.top, name="top")
 ]

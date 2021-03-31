@@ -1,13 +1,22 @@
 from django.shortcuts import render
 from django.http.response import JsonResponse
 from django.views.decorators.csrf import ensure_csrf_cookie
-from ground_view.models import SystemCondition, ReservationPlan, ReservationTarget, ReservationWeeklyTarget
+from ground_view.models import SystemCondition, ReservationPlan, ReservationTarget, ReservationWeeklyTarget, User
 import json
 from django.db import transaction
 from .batch.Share import PlanTargetHolder, TimeboxResolver, Stadium, Area, PlanStatus, DayOfWeek
 
 
 # Create your views here.
+
+def login_check(func):
+    def checker(req, *args, **kwargs):
+        user = req.session.get('user', False)
+        if user:
+            return func(req, *args, **kwargs)
+        else:
+            return JsonResponse({'session_check_err': True})
+    return checker
 
 
 @ensure_csrf_cookie
@@ -16,9 +25,11 @@ def top(req):
 
 
 @ensure_csrf_cookie
+@login_check
 def get_settings(req):
-    cond = SystemCondition.objects.all().get()
-    weekly_targets = ReservationWeeklyTarget.objects.all()
+    user_id = req.session.get('user')
+    cond = SystemCondition.objects.all().filter(user_id=user_id).get()
+    weekly_targets = ReservationWeeklyTarget.objects.all().filter(user_id=user_id)
     week_data = {
         DayOfWeek(int(t.week_day)).to_japanese(): {
             'enable': t.enable == 1,
@@ -38,8 +49,27 @@ def get_settings(req):
 
 
 @ensure_csrf_cookie
+def do_login(req):
+    data = json.loads(req.body.decode('utf-8'))
+    user = None
+    try:
+        user = User.objects.get(user_name=data['username'], password=data['pswd'])
+    except User.DoesNotExist as e:
+        pass
+
+    if user is None:
+        ret = {"status": 'user_not_found', 'token': '', 'error': 'ユーザー名またはパスワードが違います'}
+    else:
+        req.session['user'] = user.id
+        ret = {"status": 'ok', 'token': 'hoge', 'error': ''}
+    return JsonResponse(ret)
+
+
+@ensure_csrf_cookie
+@login_check
 def save_settings(req):
     data = json.loads(req.body.decode('utf-8'))
+    user_id = req.session.get('user')
 
     with transaction.atomic():
         week_targets = []
@@ -52,12 +82,12 @@ def save_settings(req):
                 enable = 1 if wd['enable'] else 0
                 week_targets.append(str(w.value))
 
-            model, _ = ReservationWeeklyTarget.objects.get_or_create(week_day=str(w.value))
+            model, _ = ReservationWeeklyTarget.objects.get_or_create(week_day=str(w.value), user_id=user_id)
             model.enable = enable
             model.target_json = target_json
             model.save()
 
-        syscon = SystemCondition.objects.get(id=1)
+        syscon = SystemCondition.objects.get(user_id=user_id)
         syscon.account = data['account']
         syscon.pswd = data['pswd']
         syscon.week_targets = ",".join(week_targets)
@@ -67,8 +97,10 @@ def save_settings(req):
 
 
 @ensure_csrf_cookie
+@login_check
 def get_plans(req):
-    items = ReservationPlan.objects.all().order_by('ymd_range')
+    user_id = req.session.get('user')
+    items = ReservationPlan.objects.all().filter(user_id=user_id).order_by('ymd_range')
     ret = {'count': len(items), 'plans': []}
     for p in items:
         dat = {
@@ -78,53 +110,62 @@ def get_plans(req):
             'area_csv': p.area_csv,
             'reserved_cnt': p.reserved_cnt,
             'target_cnt': p.target_cnt,
-            'author': p.author
+            'author': p.author,
+            'user_id': p.user_id
         }
         ret['plans'].append(dat)
     return JsonResponse(ret)
 
 
 @ensure_csrf_cookie
+@login_check
 def get_plan(req):
     date = req.GET['date']
+    user_id = req.session.get('user')
     try:
-        p = ReservationPlan.objects.get(ymd_range=date)
+        p = ReservationPlan.objects.get(ymd_range=date, user_id=user_id)
 
         ret = {'id': p.id, 'ymd_range': p.ymd_range, 'status': p.status,
-               'area_csv': p.area_csv, 'reserved_cnt': p.reserved_cnt, 'target_cnt': p.target_cnt}
+               'area_csv': p.area_csv, 'reserved_cnt': p.reserved_cnt, 'target_cnt': p.target_cnt, 'user_id': p.user_id}
     except ReservationPlan.DoesNotExist:
         ret = {}
     return JsonResponse(ret)
 
 
 @ensure_csrf_cookie
+@login_check
 def get_plan_by_id(req):
     plan_id = req.GET['planId']
+    user_id = req.session.get('user')
     try:
-        p = ReservationPlan.objects.get(id=plan_id)
+        p = ReservationPlan.objects.get(id=plan_id, user_id=user_id)
 
         ret = {'id': p.id, 'ymd_range': p.ymd_range, 'status': p.status,
-               'area_csv': p.area_csv, 'reserved_cnt': p.reserved_cnt, 'target_cnt': p.target_cnt}
+               'area_csv': p.area_csv, 'reserved_cnt': p.reserved_cnt, 'target_cnt': p.target_cnt, 'user_id': p.user_id}
     except ReservationPlan.DoesNotExist:
         ret = {}
     return JsonResponse(ret)
 
 
 @ensure_csrf_cookie
+@login_check
 def watch_change(req):
     plan_id = req.GET.get('planId')
     is_watch = req.GET.get('isWatch')
     status = PlanStatus.of(is_watch).nm
+    user_id = req.session.get('user')
     try:
-        ReservationPlan.objects.filter(id=plan_id).update(status=status)
+        ReservationPlan.objects.filter(id=plan_id).update(status=status, user_id=user_id)
     except ReservationPlan.DoesNotExist:
         status = "err"
     return JsonResponse({"status": status})
 
 
 @ensure_csrf_cookie
+@login_check
 def get_targets(req):
     date = req.GET['date']
+    user_id = req.session.get('user')
     ret = {
         'date': date,
         'areas': [],
@@ -137,8 +178,8 @@ def get_targets(req):
         ret['stadiums'][area.nm] = []
 
     try:
-        p = ReservationPlan.objects.get(ymd_range=date)
-        items = ReservationTarget.objects.all().filter(plan_id=p.id)\
+        p = ReservationPlan.objects.get(ymd_range=date, user_id=user_id)
+        items = ReservationTarget.objects.all().filter(plan_id=p.id, user_id=user_id)\
             .order_by('timebox').order_by('gname').order_by('area')
 
         ret['date'] = date
@@ -186,32 +227,36 @@ def get_targets(req):
 
 
 @ensure_csrf_cookie
+@login_check
 def delete_plan(req):
     date = req.GET['date']
+    user_id = req.session.get('user')
 
     with transaction.atomic():
-        p = ReservationPlan.objects.get(ymd_range=date)
-        ReservationTarget.objects.filter(plan_id=p.id).delete()
+        p = ReservationPlan.objects.get(ymd_range=date, user_id=user_id)
+        ReservationTarget.objects.filter(plan_id=p.id, user_id=user_id).delete()
         p.delete()
 
     return JsonResponse({"status": 'ok'})
 
 
 @ensure_csrf_cookie
+@login_check
 def save_plan(req):
     data = json.loads(req.body.decode('utf-8'))
     mode = req.GET['mode']
     watch_start = req.GET['watchStart']
     holder = PlanTargetHolder(data, PlanStatus.of(watch_start))
+    user_id = req.session.get('user')
 
     with transaction.atomic():
         if mode == 'edit':
-            old_targets = ReservationTarget.objects.filter(ym=holder.ym(), dt=holder.dt())
+            old_targets = ReservationTarget.objects.filter(ym=holder.ym(), dt=holder.dt(), user_id=user_id)
             holder.apply_reserve_gno_csv(old_targets)
-            ReservationTarget.objects.filter(ym=holder.ym(), dt=holder.dt()).delete()
-            ReservationPlan.objects.filter(ymd_range=holder.ymd).delete()
+            ReservationTarget.objects.filter(ym=holder.ym(), dt=holder.dt(), user_id=user_id).delete()
+            ReservationPlan.objects.filter(ymd_range=holder.ymd, user_id=user_id).delete()
 
-        plan_id = ReservationPlan.save_plan(holder)
-        ReservationTarget.save_target(holder, plan_id)
+        plan_id = ReservationPlan.save_plan(holder, user_id)
+        ReservationTarget.save_target(holder, plan_id, user_id)
 
     return JsonResponse({'ret': "ok"})
