@@ -1,18 +1,23 @@
 import React, { useEffect } from 'react';
+import { Redirect } from 'react-router-dom';
 import { useAppDispatch, useAppSelector } from '../hooks';
 import { fetchPlanList } from '../modules/PlanListSlice';
 import { isEmpty } from '../utils';
 import PlanRow, { Plan } from './PlanRow';
+import { SUB_DOMAIN } from '../modules/Constants';
 
 
 const PlanList: React.FC<any> = () => {
     const dispatch = useAppDispatch();
 
-    useEffect(() => {
-        dispatch(fetchPlanList())
-    }, [dispatch]);
-
+    const isLoggedIn = useAppSelector(st => st.AuthSlice.isLoggedIn)
     const st = useAppSelector(state => state.PlanListSlice)
+
+    useEffect(() => {
+        if (isLoggedIn) {
+            dispatch(fetchPlanList({}));
+        }
+    }, [dispatch]);
 
     let ret;
     if (isEmpty(st.plans) && st.count < 0) {
@@ -27,7 +32,8 @@ const PlanList: React.FC<any> = () => {
         }
     }
 
-    return <>{ret}</>;
+    return ((!isLoggedIn) ? <Redirect to={`/${SUB_DOMAIN}/`} /> : 
+        <>{ret}</>);
 };
 
 export default PlanList;

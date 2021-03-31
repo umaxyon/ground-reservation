@@ -3,6 +3,7 @@ import ajax from '../utils';
 import { Target, clearAllTarget, changeMode } from '../modules/TargetsSlice';
 import { AppDispatch, RootState } from '../store';
 import { isEmpty } from '../utils';
+import { checkSession } from './AuthSlice';
 
 
 export type PlanType = {
@@ -97,24 +98,24 @@ export const convertTargetList = (targets: Target[]) => {
     return itemList;
 }
 
-export const fetchPlanList = createAsyncThunk(
+export const fetchPlanList = createAsyncThunk<any, any, { dispatch: AppDispatch, state: RootState }>(
     'planList/fetchPlanList',
-    async () => {
-        return await ajax({ url: "/ground_view/get_plans/"}).then((resp: any) => resp);
+    async (_, thunk) => {
+        return await ajax({ url: "/ground_view/get_plans/"}).then((resp: any) => checkSession(thunk.dispatch)(resp));
     }
 )
 
-export const loadPlanById = createAsyncThunk(
+export const loadPlanById = createAsyncThunk<any, any, { dispatch: AppDispatch, state: RootState }>(
     'planList/loadPlanById',
     async (planId: string, thunk) => {
-        return await ajax({ url: "/ground_view/get_plan_by_id/", params: { planId }}).then((resp: any) => resp);
+        return await ajax({ url: "/ground_view/get_plan_by_id/", params: { planId }}).then((resp: any) => checkSession(thunk.dispatch)(resp));
     }
 )
 
-export const submitWatchChange = createAsyncThunk(
+export const submitWatchChange = createAsyncThunk<any, any, { dispatch: AppDispatch, state: RootState }>(
     'planList/submitWatchChange',
     async (params: any, thunk) => {
-        return await ajax({ url: "/ground_view/watch_change/", params }).then((resp: any) => resp);
+        return await ajax({ url: "/ground_view/watch_change/", params }).then((resp: any) => checkSession(thunk.dispatch)(resp));
     }
 )
 
@@ -122,7 +123,7 @@ export const getPlanFromDate = createAsyncThunk<any, any, { dispatch: AppDispatc
     'planList/getPlanFromDate',
     async (params: any, thunk) => {
         const date = params.date;
-        const ret = await ajax({ url: "/ground_view/get_plan/", params: { date }}).then((resp: any) => resp);
+        const ret = await ajax({ url: "/ground_view/get_plan/", params: { date }}).then((resp: any) => checkSession(thunk.dispatch)(resp));
         if (isEmpty(ret)) {
             thunk.dispatch(clearAllTarget({}));
             thunk.dispatch(changeMode('add'));
@@ -136,7 +137,9 @@ export const submitPlan = createAsyncThunk<any, any, { dispatch: AppDispatch, st
     'planList/submitPlan',
     async (param: any, thunk) => {
         const { mode, watchStart } = thunk.getState().TargetsSlice;
-        const ret = await ajax({ url: "/ground_view/save_plan/", method: 'post', data: param.itemList, params: { mode, watchStart }}).then((resp: any) => resp);
+        const ret = await ajax({ url: "/ground_view/save_plan/", method: 'post', data: param.itemList, params: { mode, watchStart }})
+            .then((resp: any) => checkSession(thunk.dispatch)(resp));
+
         thunk.dispatch(clearAllTarget({}));
         return ret;
     }
@@ -145,7 +148,7 @@ export const submitPlan = createAsyncThunk<any, any, { dispatch: AppDispatch, st
 export const deletePlan = createAsyncThunk<any, any, { dispatch: AppDispatch, state: RootState }>(
     'planList/deletePlan',
     async (date: string, thunk) => {
-        return await ajax({ url: "/ground_view/delete_plan/", params: { date }}).then((resp: any) => resp);
+        return await ajax({ url: "/ground_view/delete_plan/", params: { date }}).then((resp: any) => checkSession(thunk.dispatch)(resp));
     }
 )
 
@@ -221,8 +224,12 @@ const PlanListSlice = createSlice({
     },
     extraReducers: builder => {
         builder.addCase(fetchPlanList.fulfilled, (state, action) => {
-            state.plans = action.payload.plans;
-            state.count = action.payload.count;
+            if (action.payload) {
+                state.plans = action.payload.plans;
+                state.count = action.payload.count;
+            } else {
+                state = initialState;
+            }
         });
         builder.addCase(getPlanFromDate.fulfilled, (state, action) => {
             if (action.payload.from === 'changePickerDateConfirm') {

@@ -8,6 +8,8 @@ import GroupAddIcon from '@material-ui/icons/GroupAdd';
 import {
     getSettings,
     noticeEdit,
+    changeAccountText,
+    changePasswordText,
     saveSettings,
     changeWeek,
     changeWeekEnabled,
@@ -54,7 +56,7 @@ const Settings: React.FC<any> = (props) => {
     const isEdit = useAppSelector(st => st.SettingsSlice.isEdit);
 
     useEffect(() => {
-        dispatch(getSettings());
+        dispatch(getSettings({}));
     }, [dispatch])
 
     let strAvailable = '';
@@ -71,10 +73,18 @@ const Settings: React.FC<any> = (props) => {
         dispatch(saveSettings({}))
     }
 
-    const handleChange = (e: FocusEvent<HTMLInputElement>) => {
+    const handleBlar = (e: FocusEvent<HTMLInputElement>) => {
         const param: { isEdit: boolean, [key: string]: any } = { isEdit: true };
         param[e.target.name] = e.target.value;
         dispatch(noticeEdit(param));
+    }
+
+    const handleChangeAccount = (e: React.ChangeEvent<{ value: unknown }>) => {
+        dispatch(changeAccountText(e.target.value))
+    }
+
+    const handleChangePassword = (e: React.ChangeEvent<{ value: unknown }>) => {
+        dispatch(changePasswordText(e.target.value))
     }
 
     const handleChangeWeeks = (e: React.ChangeEvent<{ value: unknown }>) => {
@@ -144,10 +154,10 @@ const Settings: React.FC<any> = (props) => {
                                 </Grid>
                                 <Grid item={true} container={true} direction="row" spacing={3}>
                                     <Grid item={true}>
-                                        <TextField　label="アカウント" name="account" value={ss.account} onBlur={handleChange} />
+                                        <TextField　label="アカウント" name="account" value={ss.account} onChange={handleChangeAccount} onBlur={handleBlar} />
                                     </Grid>
                                     <Grid item={true}>
-                                        <TextField　label="パスワード" name="pswd" type="password" value={ss.pswd} onBlur={handleChange} />
+                                        <TextField　label="パスワード" name="pswd" type="password" value={ss.pswd} onChange={handleChangePassword} onBlur={handleBlar} />
                                     </Grid>
                                 </Grid>
                             </Grid>

@@ -3,6 +3,7 @@ import ajax from '../utils';
 import { AppDispatch, RootState } from '../store';
 import { convertTargetListForSubmit } from './PlanListSlice';
 import { changeMode, setWeekMode, closeAndClearTarget } from './TargetsSlice';
+import { checkSession } from './AuthSlice';
 
 
 function encrypt(word: string) {
@@ -10,13 +11,13 @@ function encrypt(word: string) {
 }
 
 function decrypt(word: string) {
-    return atob(word).replace(process.env.SALT as string, '');
+    return word ? atob(word).replace(process.env.SALT as string, '') : "";
 }
 
-export const getSettings = createAsyncThunk(
+export const getSettings = createAsyncThunk<any, any, { dispatch: AppDispatch, state: RootState }>(
     'Settings/getSettings',
-    async () => {
-        return await ajax({ url: "/ground_view/get_settings/"}).then((resp: any) => resp);
+    async (_, thunk) => {
+        return await ajax({ url: "/ground_view/get_settings/"}).then((resp: any) => checkSession(thunk.dispatch)(resp));
     }
 )
 
@@ -34,7 +35,7 @@ export const saveSettings = createAsyncThunk<any, any, { dispatch: AppDispatch, 
         }
         params.targets = dat.weekData;
 
-        return await ajax({ url: "/ground_view/save_settings/", data: params, method: 'POST' }).then((resp: any) => resp);
+        return await ajax({ url: "/ground_view/save_settings/", data: params, method: 'POST' }).then((resp: any) => checkSession(thunk.dispatch)(resp));
     }
 )
 
@@ -128,6 +129,22 @@ const SettingsSlice = createSlice({
             })
             state.isEdit = true
         },
+        changeAccountText: (state, action) => {
+            state.account = action.payload
+        },
+        changePasswordText: (state, action) => {
+            state.pswd = action.payload
+        },
+        initSettings: (state, action) => {
+            state.available = 1;
+            state.weekTargets = "";
+            state.account = "";
+            state.pswd = "";
+            state.isEdit = false;
+            state.weeks = [];
+            state.weekData = {};
+            state.openTaregeWeek = "";
+        },
         changeWeek: (state, action) => {
             const newWeeks: string[] = action.payload;
             state.weeks = newWeeks;
@@ -172,7 +189,9 @@ const SettingsSlice = createSlice({
     },
     extraReducers: builder => {
         builder.addCase(getSettings.fulfilled, (state, action) => {
-            SettingsSlice.caseReducers.callBackGetSystemCondition(state, action);
+            if (!action.payload.session_check_err) {
+                SettingsSlice.caseReducers.callBackGetSystemCondition(state, action);
+            }
         });
         builder.addCase(saveSettings.fulfilled, (state, action) => {
             SettingsSlice.caseReducers.callBackSaveSettings(state, action);
@@ -182,9 +201,12 @@ const SettingsSlice = createSlice({
 
 export const {
     noticeEdit,
+    changeAccountText,
+    changePasswordText,
     changeWeek,
     changeWeekEnabled,
-    changeOpenTargetWeek
+    changeOpenTargetWeek,
+    initSettings
 } = SettingsSlice.actions;
 export default SettingsSlice.reducer;
     
