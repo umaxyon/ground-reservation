@@ -37,7 +37,7 @@ dao = Dao()
 
 
 async def process(account, pswd):
-    await Reserver(log, dao, account, pswd).run()
+    # await Reserver(log, dao, account, pswd).run()
     PlanEraser(log, dao).run()
     WeeklyPlanner(log, dao).run()
 
