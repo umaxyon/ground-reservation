@@ -173,7 +173,7 @@ const adujustTimesForStudium =(state: any, area: string, newStadiums: string[], 
 
 
 export const loadTargetsFromDate = createAsyncThunk<any, any, { dispatch: AppDispatch, state: RootState }>(
-    'planList/loadTargetsFromDate',
+    'targetSlice/loadTargetsFromDate',
     async (param, thunk) => {
         const date = thunk.getState().PlanListSlice.pickerDateTmp;
         return await ajax({ url: "/ground_view/get_targets/", params: { date }})
