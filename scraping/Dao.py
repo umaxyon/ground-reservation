@@ -44,8 +44,8 @@ class Dao:
         self.cur = None
 
     @transaction
-    def get_system_condition(self):
-        self.cur.execute('select * from ground_view_systemcondition WHERE id = %s', [1])
+    def get_system_condition(self, user_id):
+        self.cur.execute('select * from ground_view_systemcondition WHERE user_id = %s', [user_id])
         dat = self.cur.fetchone()
         return {'available': dat[1] == 1, 'debug': dat[2] == 1,
                 'last_update': dat[3], 'week_targets': dat[4],
@@ -85,22 +85,31 @@ class Dao:
         return Target(self, data) if data is not None else None
 
     @transaction
-    def find_last_plan_created_by_system(self):
+    def find_last_plan_created_by_system(self, user_id):
         self.cur.execute((
             'select * from ground_view_reservationplan '
-            'WHERE author = %s ORDER BY ymd_range DESC LIMIT 1'), ['sys'])
+            'WHERE author = %s and user_id = %s ORDER BY ymd_range DESC LIMIT 1'), ['sys', user_id])
         data = self.cur.fetchone()
         return Plan(self, data) if data is not None else None
 
-    def get_week_targets(self):
-        cond = self.get_system_condition()
+    @transaction
+    def get_all_users(self):
+        self.cur.execute('select * from ground_view_user')
+        data = self.cur.fetchall()
+        return list(data)
+
+    def get_week_targets(self, user_id):
+        cond = self.get_system_condition(user_id)
         return cond['week_targets']
 
     @transaction
-    def get_weekly_target_json(self, targets):
+    def get_weekly_target_json(self, targets, user_id):
         param = [r.value for r in targets]
-        sql = 'SELECT * FROM ground_view_reservationweeklytarget WHERE week_day in (%s) and enable = 1'
-        sql = sql % ', '.join(map(lambda x: '%s', targets))
+        param.append(user_id)
+        week_days_placeholders = ', '.join(map(lambda x: '%s', targets))
+        sql = (
+            f'SELECT * FROM ground_view_reservationweeklytarget WHERE week_day in ({week_days_placeholders}) '
+            f'and enable = 1 and user_id = %s')
         self.cur.execute(sql, param)
         data = self.cur.fetchall()
         return {d[1]: d[2] for d in data}

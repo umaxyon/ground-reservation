@@ -143,11 +143,12 @@ class CalDay:
 
 
 class TargetRowHolder:
-    def __init__(self, post_row):
+    def __init__(self, post_row, day=None):
         self.ymd = ''
         self.ym = ''
         self.dt = ''
         self.week_day = ''
+        self.stadium = Stadium.nm_of(post_row['stadium'])
 
         if 'date' in post_row and post_row['date'] != '':
             y = post_row['date'][0:4]
@@ -157,39 +158,42 @@ class TargetRowHolder:
             self.dt = d
             self.ymd = f"{y}{m}{d}"
             self.week_day = get_weekday(y, m, d)
+            self.timebox = self.stadium.timebox(int(m)).index(post_row['time'])
+        else:
+            # WeeklyPlannerで作成する場合、ターゲット日がdayでわたってくる想定
+            m = day[4:6]
+            self.timebox = self.stadium.timebox(int(m)).index(post_row['time'])
 
-        self.stadium = Stadium.nm_of(post_row['stadium'])
         self.status = '未予約'
         self.area = post_row['area']
         self.gname = self.stadium.nm
-        self.timebox = self.stadium.timebox(int(m)).index(post_row['time'])
         self.goumens = post_row['goumen'] or []
         self.reserve_gno_csv = ""
 
     def count(self):
         return len(self.goumens)
 
-    def to_param(self, plan_id, ymd=""):
+    def to_param(self, plan_id, ymd="", user_id=""):
         buf = ymd or self.ymd
         ym = buf[0:6]
         d = buf[6:]
         week_day = DateTimeUtil.week_day(buf)
 
-        # "plan_id, status, ym, dt, week_day, area, gname, gno_csv, timebox, reserve_gno_csv"
+        # "plan_id, status, ym, dt, week_day, area, gname, gno_csv, timebox, reserve_gno_csv, user_id"
         return (
             plan_id, self.status, int(ym), int(d), week_day, self.area,
-            self.gname, ','.join(self.goumens), self.timebox, self.reserve_gno_csv
+            self.gname, ','.join(self.goumens), self.timebox, self.reserve_gno_csv, user_id
         )
 
 
 class PlanTargetHolder:
-    def __init__(self, items, plan_status):
+    def __init__(self, items, plan_status, day=None):
         self.ymd = ""
         self.areas = set([])
         self.targets: List[TargetRowHolder] = []
 
         for r in items:
-            t = TargetRowHolder(r)
+            t = TargetRowHolder(r, day=day)
             self.ymd = t.ymd
             self.areas.add(t.area)
             self.week_day = t.week_day
@@ -211,23 +215,23 @@ class PlanTargetHolder:
                 if t.area == old_t.area and t.gname == old_t.gname and t.timebox == old_t.timebox:
                     t.reserve_gno_csv = old_t.reserve_gno_csv
 
-    def create(self, dao, day):
+    def create(self, dao, day, user_id):
         p_sql = (
             "insert into ground_view_reservationplan("
-            "status, area_csv, ymd_range, reserved_cnt, target_cnt, author) values ("
-            "%s, %s, %s, %s, %s, %s)"
+            "status, area_csv, ymd_range, reserved_cnt, target_cnt, author, user_id) values ("
+            "%s, %s, %s, %s, %s, %s, %s)"
         )
 
         # target_cnt = reduce(lambda a, b: a + b, [len(t.goumens) for t in self.targets])
-        params = ('監視中', (",".join(self.areas)), day, 0, self.target_count(), 'sys')
+        params = ('監視中', (",".join(self.areas)), day, 0, self.target_count(), 'sys', user_id)
         p_id = dao.insert_exec(p_sql, params)
 
         t_sql = (
             "insert into ground_view_reservationtarget("
-            "plan_id, status, ym, dt, week_day, area, gname, gno_csv, timebox, reserve_gno_csv) values ("
-            "%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
+            "plan_id, status, ym, dt, week_day, area, gname, gno_csv, timebox, reserve_gno_csv, user_id) values ("
+            "%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
         )
-        t_values = [t.to_param(p_id, day) for t in self.targets]
+        t_values = [t.to_param(p_id, day, user_id) for t in self.targets]
         dao.insert_multi_exec(t_sql, t_values)
 
 
