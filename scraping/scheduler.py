@@ -51,7 +51,7 @@ def run_reserver(debug, account, pswd):
 def schedule(interval, wait=True):
     start_tm = time.time()
     while True:
-        sys_con = dao.get_system_condition()
+        sys_con = dao.get_system_condition("0")
         if sys_con['available']:
             p = multiprocessing.Process(target=run_reserver, args=(sys_con['debug'], sys_con['account'], sys_con['pswd']))
             log.info(f"start.")
