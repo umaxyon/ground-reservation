@@ -51,7 +51,7 @@ export function arrayMarge(arr1:string[], arr2:string[]) {
 }
 
 export function isEmpty(obj: {}) {
-  return !Object.keys(obj).length;
+  return !obj || !Object.keys(obj).length;
 }
 
 export function formatYmd(strYmd: string) {
