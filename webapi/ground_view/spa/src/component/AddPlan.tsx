@@ -61,13 +61,27 @@ const useStyles = makeStyles((theme: Theme) =>
         },
         btnDelete: {
             marginLeft: '12px'
-        }
+        },
+        vcenterParent: {
+            position: 'relative',
+            height: '100%'
+        },
+        vcenter: {
+            display: 'inline-block',
+            position: 'absolute',
+            top: '50%',
+            transform: 'translate(0, -50%)'
+        },
     }),
 );
 
 const theme = createMuiTheme({
     palette: { primary: green },
 });
+
+interface ITargetRow {
+    area: string, stadium: string, time: string, goumen: number, reserved: number
+}
 
 const AddPlan: React.FC<any> = (props) => {
     const dispatch = useAppDispatch();
@@ -87,10 +101,13 @@ const AddPlan: React.FC<any> = (props) => {
     const pickerMonth = parse(pickerDate, 'yyyyMMdd', dt).getMonth() + 1;
 
     const targets = ts.targets.slice().sort((a, b) => (a.date === b.date) ? 0 : (a.date < b.date) ? -1 : 1);
-    const itemList = convertTargetList(targets);
+    const itemList: ITargetRow[] = convertTargetList(targets);
     const existsTarget = itemList.length === 0 ? 'add': 'edit';
     const strMode = ts.mode === 'add' ? '登録': '編集';
-    
+    const reservedCount = itemList.map(r => r.reserved).reduce((a, b) => a + b, 0);
+    const reservedMessage = reservedCount > 0 ? "予約済みターゲットが存在するため、日付変更は出来ません" : ""
+
+
     if (existsTarget === 'add') {
         while (planedDays.includes(pickerDate)) {
             pickerDate = format(addDays(parse(pickerDate, 'yyyyMMdd', dt), 1), 'yyyyMMdd')
@@ -171,16 +188,21 @@ const AddPlan: React.FC<any> = (props) => {
                 <Grid item={true}>
                     <Typography variant="h5">プランの{strMode}</Typography>
                 </Grid>
-                <Grid item={true}>
-                    <DatePicker
-                        minDate={startDay} maxDate={endDay}
-                        value={parse(pickerDate, 'yyyyMMdd', new Date())} label="対象日" format="yyyy年MM月dd日(eee)"
-                        onChange={dt => handleDateChange(dt)} 
-                        renderDay ={(day, selectedDate, isInCurrentMonth, dayComponent) => {
-                            const selD = format((day as Date), 'yyyyMMdd', {locale: ja});
-                            return <Badge color="secondary" invisible={!planedDays.includes(selD)} variant="dot" >{dayComponent}</Badge>
-                        }}
-                    />
+                <Grid item={true} container={true} className={css.vcenterParent} style={{height: "60px"}}>
+                    <Grid item={true} className={css.vcenter}>
+                        <DatePicker
+                            minDate={startDay} maxDate={endDay} disabled={reservedCount > 0}
+                            value={parse(pickerDate, 'yyyyMMdd', new Date())} label="対象日" format="yyyy年MM月dd日(eee)"
+                            onChange={dt => handleDateChange(dt)}
+                            renderDay ={(day, selectedDate, isInCurrentMonth, dayComponent) => {
+                                const selD = format((day as Date), 'yyyyMMdd', {locale: ja});
+                                return <Badge color="secondary" invisible={!planedDays.includes(selD)} variant="dot" >{dayComponent}</Badge>
+                            }}
+                        />
+                    </Grid>
+                    <Grid item={true} className={css.vcenter} style={{left: '210px', top: '60%'}}>
+                        {reservedMessage}
+                    </Grid>
                 </Grid>
                 <Grid item={true}>
                     <hr className={css.hrMargin}/>
