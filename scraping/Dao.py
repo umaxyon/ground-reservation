@@ -137,7 +137,7 @@ class Dao:
 
         reserved_cnt = len(t.reserve_gno_csv.split(',')) if t.reserve_gno_csv != '' else 0
         self.cur.execute(
-            'update ground_view_reservationplan set reserved_cnt = %s where id = %s',
+            'update ground_view_reservationplan set reserved_cnt = reserved_cnt + %s where id = %s',
             [reserved_cnt, t.plan_id])
 
         self.cur.execute((
