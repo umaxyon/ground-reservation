@@ -26,9 +26,11 @@ class SystemCondition(models.Model):
     last_update = models.CharField('最終更新', max_length=19, validators=[reg_ymdhms])
     account = models.CharField('アカウント', max_length=8, validators=[reg_account], default='')
     pswd = models.CharField('パスワード', max_length=50, default='')
+    user_id = models.CharField('ユーザーID', max_length=2, default='')
 
 
 class ReservationPlan(models.Model):
+    user_id = models.CharField('ユーザーID', max_length=2, default='')
     status = models.CharField('状態', max_length=10)
     ymd_range = models.CharField('年月日範囲', max_length=17, default='')
     author = models.CharField('作成者', max_length=5, default='')
@@ -37,14 +39,15 @@ class ReservationPlan(models.Model):
     reserved_cnt = models.IntegerField('予約済み数', validators=[MaxLengthValidator(3)], default=0)
 
     @staticmethod
-    def save_plan(dat: PlanTargetHolder):
+    def save_plan(dat: PlanTargetHolder, user_id):
         plan = ReservationPlan(
             status=dat.plan_status.nm,
             area_csv=','.join(dat.areas),
             ymd_range=dat.ymd,
             reserved_cnt=0,
             target_cnt=dat.target_count(),
-            author="man"
+            author="man",
+            user_id=user_id
         )
         plan.save()
         return plan.id
@@ -52,6 +55,7 @@ class ReservationPlan(models.Model):
 
 class ReservationTarget(models.Model):
     plan = models.ForeignKey(ReservationPlan, on_delete=models.CASCADE, null=True)
+    user_id = models.CharField('ユーザーID', max_length=2, default='')
     status = models.CharField('状態', max_length=10)
 
     # gno = models.IntegerField('号面', validators=[MaxLengthValidator(2)], default=0)
@@ -65,9 +69,10 @@ class ReservationTarget(models.Model):
     timebox = models.IntegerField('時間帯', validators=[MaxLengthValidator(2)])
 
     @staticmethod
-    def save_target(dat: PlanTargetHolder, plan_id):
+    def save_target(dat: PlanTargetHolder, plan_id, user_id):
         targets = [ReservationTarget(
             status=th.status,
+            user_id=user_id,
             plan_id=plan_id,
             ym=th.ym,
             dt=th.dt,
@@ -97,9 +102,15 @@ class ReservationResult(models.Model):
 
 
 class ReservationWeeklyTarget(models.Model):
-    reg_on_off = RegexValidator(regex=r'[0-1]')
+    user_id = models.CharField('ユーザーID', max_length=2, default='')
 
+    reg_on_off = RegexValidator(regex=r'[0-1]')
     enable = models.IntegerField('有効無効', validators=[reg_on_off], default=0)
     week_day = models.CharField('曜日', max_length=1)
     target_json = models.CharField('ターゲット設定JSON', max_length=3000)
 
+
+class User(models.Model):
+
+    user_name = models.CharField('ユーザー名', max_length=25, default="")
+    password = models.CharField('パスワード', max_length=25, default="")
