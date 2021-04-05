@@ -38,15 +38,15 @@ time_ptn = {
 }
 
 timebox_table = {
-    '昭和島運動場': {0: time_ptn[1], 1: time_ptn[4]},
-    '平和島公園': {0: time_ptn[1], 1: time_ptn[4]},
+    # '昭和島運動場': {0: time_ptn[1], 1: time_ptn[4]},
+    # '平和島公園': {0: time_ptn[1], 1: time_ptn[4]},
     '大田ｽﾀｼﾞｱﾑ': {0: time_ptn[2], 1: time_ptn[2]},
     '東調布公園': {0: time_ptn[3], 1: time_ptn[5]},
-    '萩中公園': {0: time_ptn[3], 1: time_ptn[2]},
     '多摩川緑地': {0: time_ptn[1], 1: time_ptn[4]},
     '六郷橋緑地': {0: time_ptn[1], 1: time_ptn[4]},
     '大師橋緑地': {0: time_ptn[1], 1: time_ptn[4]},
-    'ｶﾞｽ橋緑地': {0: time_ptn[1], 1: time_ptn[4]}
+    'ｶﾞｽ橋緑地': {0: time_ptn[1], 1: time_ptn[4]},
+    '萩中公園': {0: time_ptn[3], 1: time_ptn[2]}
 }
 
 
@@ -61,10 +61,11 @@ class TimeboxResolver:
 
 
 class Stadium(Enum):
-    def __init__(self, sid, full_nm, nm):
+    def __init__(self, sid, full_nm, nm, priority):
         self.id = sid
         self.full_nm = full_nm
         self.nm = nm
+        self.priority = priority
 
     @staticmethod
     def members():
@@ -83,26 +84,29 @@ class Stadium(Enum):
     def timebox(self, month) -> List:
         return TimeboxResolver(self).get(month)
 
-    SHOWAJIMA = (0, '昭和島運動場野球場', '昭和島運動場')
-    HEIWAJIMA = (1, '平和島公園野球場', '平和島公園')
-    OOTA_ST = (2, '大田スタジアム', '大田ｽﾀｼﾞｱﾑ')
-    HIGASHI_CHOFU = (3, '東調布公園', '東調布公園')
-    HAGINAKA = (4, '萩中公園', '萩中公園')
-    TAMAGAWA = (5, '多摩川緑地野球場', '多摩川緑地')
-    ROKUGOBASHI = (6, '多摩川六郷橋緑地野球場', '六郷橋緑地')
-    TAISHIBASHI = (7, '多摩川大師橋緑地野球場', '大師橋緑地')
-    GASUBASHI = (8, '多摩川ガス橋緑地野球場', 'ｶﾞｽ橋緑地')
+    # SHOWAJIMA = (0, '昭和島運動場野球場', '昭和島運動場')
+    # HEIWAJIMA = (1, '平和島公園野球場', '平和島公園')
+    OOTA_ST = (2, '大田スタジアム', '大田ｽﾀｼﾞｱﾑ', ['1'])
+    HIGASHI_CHOFU = (3, '東調布公園', '東調布公園', ['1'])
+    HAGINAKA = (4, '萩中公園', '萩中公園', ['1'])
+    TAMAGAWA = (5, '多摩川緑地野球場', '多摩川緑地', ['9', '13', '12', '14', '15', '10', '8', '7', '11', '16', '4', '5', '3', '2'])
+    ROKUGOBASHI = (6, '多摩川六郷橋緑地野球場', '六郷橋緑地', ['1', '4', '2', '3', '5'])
+    TAISHIBASHI = (7, '多摩川大師橋緑地野球場', '大師橋緑地', [])
+    GASUBASHI = (8, '多摩川ガス橋緑地野球場', 'ｶﾞｽ橋緑地', ['6', '7', '8', '4', '3', '2', '1'])
 
 
 class Area(Enum):
-    def __init__(self, aid, nm, stadiums):
+    def __init__(self, aid, nm, stadiums, priority):
         self.id = aid
         self.nm = nm
         self.stadiums = stadiums
+        self.priority = priority
 
     @staticmethod
     def members():
-        return [*Area.__members__.values()]
+        mems = [*Area.__members__.values()]
+        mems.sort(key=lambda a: a.priority)
+        return mems
 
     @staticmethod
     def nm_of(nm):
@@ -114,11 +118,15 @@ class Area(Enum):
         target_areas = [t.area for t in reserver.targets]
         return [area for area in Area.members() if area.nm in target_areas]
 
-    OOMORI = (0, '大森', [Stadium.SHOWAJIMA, Stadium.HEIWAJIMA])
-    OOTA = (1, '大田ST', [Stadium.OOTA_ST])
-    CHOFU = (2, '調布', [Stadium.HIGASHI_CHOFU])
-    KOUJIYA_HANEDA = (3, '糀谷・羽田', [Stadium.HAGINAKA])
-    KAMATA = (4, '蒲田', [Stadium.TAMAGAWA, Stadium.ROKUGOBASHI, Stadium.TAISHIBASHI, Stadium.GASUBASHI])
+    @staticmethod
+    def sort_base_keys():
+        return [a.nm for a in Area.members()]
+
+    # OOMORI = (0, '大森', [Stadium.SHOWAJIMA, Stadium.HEIWAJIMA])
+    OOTA = (1, '大田ST', [Stadium.OOTA_ST], 1)
+    KOUJIYA_HANEDA = (3, '糀谷・羽田', [Stadium.HAGINAKA], 2)
+    KAMATA = (4, '蒲田', [Stadium.TAMAGAWA, Stadium.ROKUGOBASHI, Stadium.TAISHIBASHI, Stadium.GASUBASHI], 3)
+    CHOFU = (2, '調布', [Stadium.HIGASHI_CHOFU], 4)
 
 
 def get_weekday(year, month, day):
