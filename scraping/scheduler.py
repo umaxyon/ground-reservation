@@ -72,4 +72,4 @@ def schedule(interval, wait=True):
 
 
 if __name__ == "__main__":
-    schedule(3 * 60)
+    schedule(4 * 60)
