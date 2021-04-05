@@ -74,6 +74,15 @@ class Scraper:
         await login_btn.click()
         await self.page.waitForNavigation()
 
+        # 文言「利用者または暗証番号がまちがっています。」
+        login_err = await self.page.J(
+            'form > div > div> table:first-child > tbody > tr > td > div > table > tbody > tr:nth-child(2) > td.LBATR')
+
+        if login_err:
+            self.log.info(f'利用者または暗証番号がまちがっています。 account={self.account}')
+
+        return login_err is None
+
     async def click_to_menu_button(self):
         btn_menu = await self.page.J('body > table:first-child a')
         await btn_menu.click()
