@@ -47,8 +47,11 @@ class WeeklyPlanner:
 
             target_days = self.target_date_range(user_id)
             for day in target_days:
+                old_plan = self.dao.get_plan_from_ymd(day, user_id)
+                if old_plan is not None:
+                    continue
                 week = DayOfWeek.from_date(Du.from_str(day)).value
-                holder = PlanTargetHolder(self.target_tmplates[str(week)], PlanStatus.of('true'), day)
+                holder = PlanTargetHolder(self.target_tmplates[str(week)], PlanStatus.of('false'), day)
                 holder.create(self.dao, day, user_id)
 
             self.log.debug(f'create_plan. target_days={target_days}')
