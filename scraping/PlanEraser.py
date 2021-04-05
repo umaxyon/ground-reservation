@@ -11,7 +11,7 @@ class PlanEraser:
     def run(self):
         self.log.debug('plan eraser start.')
 
-        del_targets = self.dao.find_old_plan(int(Du.str_today()))
+        del_targets = self.dao.find_old_plan(int(Du.add_day_str(Du.str_today(), 3)))
         self.log.debug(f'del_targes=${del_targets}')
         for pid in del_targets:
             self.dao.delete_targets_and_plan(pid)
