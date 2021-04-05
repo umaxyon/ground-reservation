@@ -231,7 +231,7 @@ class PlanTargetHolder:
         )
 
         # target_cnt = reduce(lambda a, b: a + b, [len(t.goumens) for t in self.targets])
-        params = ('監視中', (",".join(self.areas)), day, 0, self.target_count(), 'sys', user_id)
+        params = (self.plan_status.nm, (",".join(self.areas)), day, 0, self.target_count(), 'sys', user_id)
         p_id = dao.insert_exec(p_sql, params)
 
         t_sql = (
