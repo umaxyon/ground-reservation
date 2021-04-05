@@ -80,7 +80,11 @@ class ReservationCalender:
         cal_ym = int(f"{self.year}{self.month:0>2}")
         if ym > cal_ym:
             await self.click_next_month()
+            if await self.is_not_next_page():
+                return False
+
             await self.describe_calender()
+        return True
 
     async def describe_calender(self):
         self.open_days = []
