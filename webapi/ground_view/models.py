@@ -97,7 +97,7 @@ class ReservationResult(models.Model):
     target = models.ForeignKey(ReservationTarget, on_delete=models.CASCADE, null=True)
 
     reserve_no = models.IntegerField('予約番号', validators=[MaxLengthValidator(8)])
-    g_no = models.CharField('号面', max_length=1, default=None)
+    g_no = models.CharField('号面', max_length=2, default=None)
     timebox = models.IntegerField('時間帯', validators=[MaxLengthValidator(2)], default=None)
 
 
