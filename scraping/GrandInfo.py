@@ -1,3 +1,4 @@
+import copy
 import itertools
 from ground_view.batch.Share import Stadium
 from ground_view.batch.Share import DateTimeUtil as Du
@@ -13,6 +14,8 @@ ZEN_HAN_TRANS = str.maketrans({chr(0xFF01 + i): chr(0x21 + i) for i in range(94)
 
 
 def get_goumen_num(str_goumen):
+    if '号面' not in str_goumen:
+        return '1'
     return str_goumen.translate(ZEN_HAN_TRANS).replace('号面', '')
 
 
@@ -55,12 +58,36 @@ class GrandInfo:
             all_rows.append((rownum, gname, gno, tds))
         return all_rows
 
+    def sort_trs_gno_priority(self, trs, target):
+        gno_prioritys = copy.deepcopy(Stadium.nm_of(target.gname).priority)
+        sorted_trs = []
+        while len(gno_prioritys) > 0:
+            pgno = gno_prioritys.pop(0)
+            hit_num = -1
+            for rownum, tr in enumerate(trs):
+                if tr[2] == pgno:
+                    hit_num = rownum
+                    break
+            sorted_trs.append(trs.pop(hit_num))
+
+        return sorted_trs
+
+        #
+        # for pgno in gno_prioritys:
+        #     buf = [tr for tr in trs if tr[2] == pgno]
+        #     if len(buf) == 1:
+        #         sorted_trs.append(buf[0])
+        # return sorted_trs
+
     async def click_target_btn_at_one_choice(self, timebox, target):
         all_rows = await self.get_all_tr_rows()
         gname_grp_trs = {x[0]: tuple(x[1]) for x in itertools.groupby(all_rows, lambda r: r[1])}  # スタジアムでグループしたtrs
 
-        # TODO 号面優先順でのソート
-        for rownum, name, gno, tds in gname_grp_trs.get(target.gname):
+        trs = [(rownum, name, gno, tds) for rownum, name, gno, tds in gname_grp_trs.get(target.gname)]
+        trs = self.sort_trs_gno_priority(trs, target)  # 号面の優先順にtrを並べ替え
+
+        # 号面の優先順にクリックトライ(時間帯内)
+        for rownum, name, gno, tds in trs:
             if self.check_unsupported_target(target, gno) or not target.is_target_gno(gno):
                 continue
 
@@ -68,7 +95,7 @@ class GrandInfo:
             if btn is not None:
                 await btn.click()
                 await self.scraper.page.waitForNavigation()
-                return name, gno, timebox
+                return name, gno, timebox  # 1個押せたら終了
 
         return None
 

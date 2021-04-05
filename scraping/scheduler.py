@@ -36,16 +36,21 @@ log = init_logger()
 dao = Dao()
 
 
-async def process(account, pswd):
-    # await Reserver(log, dao, account, pswd).run()
+async def process():
+    users = dao.get_all_users()
+    for user in users:
+        sc = dao.get_system_condition(user[0])
+        log.info(f'[{user[1]}]')
+        await Reserver(log, dao, user[0], sc['account'], sc['pswd']).run()
+
+    # WeeklyPlanner(log, dao).run()
     PlanEraser(log, dao).run()
-    WeeklyPlanner(log, dao).run()
 
 
-def run_reserver(debug, account, pswd):
+def run_reserver(debug):
     log_level = logging.DEBUG if debug == 1 else logging.INFO
     log.setLevel(log_level)
-    asyncio.get_event_loop().run_until_complete(process(account, pswd))
+    asyncio.get_event_loop().run_until_complete(process())
 
 
 def schedule(interval, wait=True):
@@ -53,7 +58,7 @@ def schedule(interval, wait=True):
     while True:
         sys_con = dao.get_system_condition("0")
         if sys_con['available']:
-            p = multiprocessing.Process(target=run_reserver, args=(sys_con['debug'], sys_con['account'], sys_con['pswd']))
+            p = multiprocessing.Process(target=run_reserver, args=(sys_con['debug'],))
             log.info(f"start.")
             p.start()
             if wait:

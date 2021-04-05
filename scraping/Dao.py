@@ -62,10 +62,20 @@ class Dao:
         ), params)
 
     @transaction
-    def get_available_plans(self, target_status=('監視中',)):
-        self.cur.execute('select * from ground_view_reservationplan WHERE status = %s', list(target_status))
+    def get_available_plans(self, user_id, target_status='監視中'):
+        self.cur.execute(
+            'select * from ground_view_reservationplan WHERE status = %s and user_id = %s',
+            [target_status, user_id])
         data = self.cur.fetchall()
         return [Plan(self, d) for d in data]
+
+    @transaction
+    def get_plan_from_ymd(self, str_ymd, user_id):
+        self.cur.execute(
+            'select * from ground_view_reservationplan WHERE ymd_range = %s and user_id = %s',
+            [str_ymd, user_id])
+        data = self.cur.fetchone()
+        return Plan(self, data)
 
     @transaction
     def get_targets_from_plan_id(self, plan_id):
@@ -134,6 +144,12 @@ class Dao:
         self.cur.execute('delete from ground_view_reservationplan where id = %s', [pid])
 
     @transaction
+    def determined_plan(self, ymd):
+        self.cur.execute(
+            'update ground_view_reservationplan set status = %s where ymd_range = %s', ['予約済', ymd]
+        )
+
+    @transaction
     def tx_save_reserve_result(self, t: Target, reserve_no, g_no):
         # 1トランでターゲット・プラン更新、resevation_result追加を行う
 
@@ -153,4 +169,41 @@ class Dao:
             "insert into ground_view_reservationresult(reserve_no, g_no, timebox, target_id) "
             "values(%s, %s, %s, %s)"
         ), [reserve_no, g_no, t.timebox, t.id])
+
+    @transaction
+    def get_reserved_count(self, ymd):
+        ym = int(ymd[0:6])
+        d = int(ymd[6:8])
+        self.cur.execute(
+            ('select sum(b.cnt) as reserved_cnt '
+             '  from '
+             '    (select '
+             '       a.area,'
+             '       (select count(*) from ground_view_reservationtarget '
+             '         where ym = %s and dt = %s and status = %s and area = a.area) as cnt '
+             '       from (select area from ground_view_reservationtarget where ym = %s and dt = %s group by area) as a'
+             '       group by a.area'
+             '    ) b'), [ym, d, '予約有', ym, d]
+        )
+        data = self.cur.fetchone()
+        return data
+
+    @transaction
+    def get_reserved_status_data(self, ymd):
+        ym = int(ymd[0:6])
+        d = int(ymd[6:8])
+        self.cur.execute(
+            ('select'
+             '  a.area,'
+             '  a.timebox,'
+             '  (select gname from ground_view_reservationtarget'
+             '    where ym = %s and dt = %s and status = %s and area = a.area and timebox = a.timebox) as gname,'
+             '  (select count(*) from ground_view_reservationtarget '
+             '    where ym = %s and dt = %s and status = %s and area = a.area) as cnt '
+             '  from (select area, timebox from ground_view_reservationtarget'
+             '         where ym = %s and dt = %s group by area, timebox) as a '),
+            [ym, d, '予約有', ym, d, '予約有', ym, d]
+        )
+        data = self.cur.fetchall()
+        return [(d[0], d[1], d[2], d[3]) for d in data]
 
