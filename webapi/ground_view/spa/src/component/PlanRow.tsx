@@ -1,7 +1,7 @@
 import React from 'react';
 import { makeStyles } from '@material-ui/core/styles';
 import { Grid, Card, CardContent, Chip, Typography } from '@material-ui/core';
-import { PlanType } from '../modules/PlanListSlice';
+import { PlanType, ReserveData } from '../modules/PlanListSlice';
 import { formatYmd } from '../utils';
 import ContactlessIcon from '@material-ui/icons/Contactless';
 import ArrowForwardIosIcon from '@material-ui/icons/ArrowForwardIos';
@@ -10,7 +10,7 @@ import IconButton from '@material-ui/core/IconButton';
 import ArrowDropDownCircleIcon from '@material-ui/icons/ArrowDropDownCircle';
 import AccountCircleIcon from '@material-ui/icons/AccountCircle';
 import { useHistory } from 'react-router-dom';
-import { SUB_DOMAIN } from '../modules/Constants';
+import { SUB_DOMAIN, TimeResolver, STADIUMS_DEFAULT_SELECT } from '../modules/Constants';
 import format from 'date-fns/format';
 import parse from 'date-fns/parse';
 import ja from 'date-fns/locale/ja';
@@ -18,10 +18,12 @@ import { createStyles, Theme } from '@material-ui/core/styles';
 import { teal, indigo } from '@material-ui/core/colors';
 
 export class Plan {
-    dat: PlanType
+    dat: PlanType;
+    pDate: Date;
 
     constructor(dat: PlanType) {
         this.dat = dat;
+        this.pDate = parse(this.dat.ymd_range, 'yyyyMMdd', new Date());
     }
     id(): string {
         return this.dat.id;
@@ -35,10 +37,22 @@ export class Plan {
         if (!this.dat.ymd_range) {
             return "";
         }
-        const pDate = parse(this.dat.ymd_range, 'yyyyMMdd', new Date());
-        return format(pDate, 'yyyy年MM月dd日(eee)', {locale: ja})
+        return format(this.pDate, 'yyyy年MM月dd日(eee)', {locale: ja})
+    }
+    month(): number {
+        return Number.parseInt(format(this.pDate, 'MM', {locale: ja}));
     }
 
+    reservedData(): ReserveData[] {
+        const ret: ReserveData[] = []
+        this.dat.reserve_data.forEach(r => {
+            const stadium = r.stadium || STADIUMS_DEFAULT_SELECT[r.area][0];
+            const timeptn = new TimeResolver(stadium).get(this.month())
+            const timebox = timeptn[Number.parseInt(r.timebox)]
+            ret.push({...r, timebox});
+        });
+        return ret;
+    }
 }
 
 const createCss = makeStyles((theme: Theme) => createStyles({

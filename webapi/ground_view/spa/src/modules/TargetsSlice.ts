@@ -184,6 +184,19 @@ export const loadTargetsFromDate = createAsyncThunk<any, any, { dispatch: AppDis
     }
 )
 
+export const setDefaultCondition = (state: any, areas: string[], month: number) => {
+    state.condition.areas = areas;
+    areas.map(area => {
+        state.condition.stadiums[area] = [...STADIUMS_DEFAULT_SELECT[area]];
+        state.condition.times[area] = {};
+        state.condition.goumens[area] = {};
+        state.condition.stadiums[area].map((stadium: string) => {
+            state.condition.times[area][stadium] = new TimeResolver(stadium).get_default(month);
+            state.condition.goumens[area][stadium] = GOUMENS_DEFAULT_SELECT[stadium];
+        });
+    });
+}
+
 
 const TargetsSlice = createSlice({
     name: "TargetsSlice",
@@ -193,15 +206,7 @@ const TargetsSlice = createSlice({
             const areas: string[] = action.payload.areas;
             const pickerMonth: number = action.payload.pickerMonth;
             state.condition.areas = areas;
-            areas.map(area => {
-                state.condition.stadiums[area] = [...STADIUMS_DEFAULT_SELECT[area]];
-                state.condition.times[area] = {};
-                state.condition.goumens[area] = {};
-                state.condition.stadiums[area].map(stadium => {
-                    state.condition.times[area][stadium] = new TimeResolver(stadium).get_default(pickerMonth);
-                    state.condition.goumens[area][stadium] = GOUMENS_DEFAULT_SELECT[stadium];
-                });
-            });
+            setDefaultCondition(state, areas, pickerMonth);
             state.condition.date = action.payload.date;
             state.condition.total = countGoumens(state.condition);
             state.mode = 'add';

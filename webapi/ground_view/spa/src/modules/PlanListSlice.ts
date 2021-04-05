@@ -5,6 +5,15 @@ import { AppDispatch, RootState } from '../store';
 import { isEmpty } from '../utils';
 import { checkSession } from './AuthSlice';
 
+export interface ReserveData {
+    area: string,
+    timebox: string,
+    stadium?: string,
+    target_id: string,
+    reserve_no: string,
+    gno?: string
+    reserveCnt?: number
+}
 
 export type PlanType = {
     id: string,
@@ -12,7 +21,8 @@ export type PlanType = {
     ymd_range: string,
     area_csv: string,
     target_cnt: number,
-    reserved_cnt: number
+    reserved_cnt: number,
+    reserve_data: ReserveData[]
 }
 
 export type PlanListType = {
@@ -43,7 +53,8 @@ const initialPlantype: PlanType = {
     ymd_range: '',
     area_csv: '',
     reserved_cnt: -1,
-    target_cnt: -1
+    target_cnt: -1,
+    reserve_data: []
 }
 
 const initialState: PlanListState = {

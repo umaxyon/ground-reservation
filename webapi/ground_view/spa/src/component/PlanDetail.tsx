@@ -108,6 +108,25 @@ const PlanDetail: React.FC<any> = (props) => {
         }
     }
 
+    const reserveDetail = dtl.reservedData().map((r, i) => {
+        return (
+            <Grid item={true} container={true} spacing={2} key={`reserveDat_${r.area}_${r.timebox}_${i}`}>
+                <Grid item={true}>
+                    {r.area}
+                </Grid>
+                <Grid item={true}>
+                    {r.timebox || ""}
+                </Grid>
+                <Grid item={true}>
+                    {r.stadium || '未'} {r.gno || ""}
+                </Grid>
+                <Grid item={true}>
+                    {r.reserve_no || ""}
+                </Grid>
+            </Grid>
+        )
+    })
+
     return (
         <Paper className={css.paper}>
             <Grid direction="column" container={true} spacing={1}>
@@ -149,6 +168,15 @@ const PlanDetail: React.FC<any> = (props) => {
                             プランを削除する
                         </Button>
                     </Grid>
+                </Grid>
+                <Grid item={true}>
+                    <hr />
+                </Grid>
+                <Grid item={true}>
+                    <Typography variant="subtitle1">予約状況 </Typography>
+                </Grid>
+                <Grid item={true} container={true}>
+                    {reserveDetail}
                 </Grid>
             </Grid>
             <ConfirmDialog

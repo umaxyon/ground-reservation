@@ -3,7 +3,7 @@ from django.http.response import JsonResponse
 from django.views.decorators.csrf import ensure_csrf_cookie
 from ground_view.models import SystemCondition, ReservationPlan, ReservationTarget, ReservationWeeklyTarget, User
 import json
-from django.db import transaction
+from django.db import transaction, connection
 from .batch.Share import PlanTargetHolder, TimeboxResolver, Stadium, Area, PlanStatus, DayOfWeek
 
 
@@ -140,8 +140,42 @@ def get_plan_by_id(req):
     try:
         p = ReservationPlan.objects.get(id=plan_id, user_id=user_id)
 
+        with connection.cursor() as cursor:
+            ym = p.ymd_range[0:6]
+            d = p.ymd_range[6:8]
+            cursor.execute(
+                ('select'
+                 '  a.area, a.timebox,'
+                 '  b.gname, b.id as target_id,'
+                 '  c.reserve_no, c.g_no as gno,'
+                 '  (select count(*) from ground_view_reservationtarget '
+                 '    where ym = %s and dt = %s and status = %s and area = a.area) as cnt '
+                 '  from (select area, timebox from ground_view_reservationtarget'
+                 '         where ym = %s and dt = %s group by area, timebox) as a '
+                 '  left outer join '
+                 '   (select gname, id, area, timebox from ground_view_reservationtarget'
+                 '     where ym = %s and dt = %s and status = %s) b '
+                 '    on a.area = b.area and a.timebox = b.timebox '
+                 '  left outer join '
+                 '   (select reserve_no, g_no, target_id from ground_view_reservationresult) c '
+                 '    on b.id = c.target_id '
+                 'order by a.area, a.timebox'
+                 ),
+                [ym, d, '予約有', ym, d, ym, d, '予約有']
+            )
+            data = cursor.fetchall()
+            reserve_data = [{
+                'area': d[0],
+                'timebox': d[1],
+                'stadium': d[2],
+                'target_id': d[3],
+                'reserve_no': d[4],
+                'gno': d[5],
+                'reserveCnt': d[6]} for d in data]
+
         ret = {'id': p.id, 'ymd_range': p.ymd_range, 'status': p.status,
-               'area_csv': p.area_csv, 'reserved_cnt': p.reserved_cnt, 'target_cnt': p.target_cnt, 'user_id': p.user_id}
+               'area_csv': p.area_csv, 'reserved_cnt': p.reserved_cnt, 'target_cnt': p.target_cnt,
+               'user_id': p.user_id, 'reserve_data': reserve_data}
     except ReservationPlan.DoesNotExist:
         ret = {}
     return JsonResponse(ret)
@@ -207,18 +241,13 @@ def get_targets(req):
                 ret['goumens'][t.area][t.gname] = []
                 ret['times'][t.area][t.gname] = []
 
-            if buf['goumens'] != t.gno_csv:
-                buf['goumens'] = t.gno_csv
-                ret['goumens'][t.area][t.gname] = t.gno_csv.split(',')
+            ret['goumens'][t.area][t.gname] = t.gno_csv.split(',')
 
-            if buf['timebox'] != t.timebox:
-                buf['timebox'] = t.timebox
-                tm = time_resolver.get(t.month())[t.timebox]
-                ret['times'][t.area][t.gname].append(tm)
+            tm = time_resolver.get(t.month())[t.timebox]
+            ret['times'][t.area][t.gname].append(tm)
 
-                if buf['reserved'] != t.reserve_gno_csv:
-                    buf['reserved'] = t.reserve_gno_csv
-                    ret['reserved'][t.area][t.gname][tm] = t.reserve_gno_csv.split(',')
+            reserve_list = t.reserve_gno_csv.split(',') if t.reserve_gno_csv != '' else []
+            ret['reserved'][t.area][t.gname][tm] = reserve_list
 
     except ReservationTarget.DoesNotExist or ReservationPlan.DoesNotExist:
         ret = {}
