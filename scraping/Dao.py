@@ -75,7 +75,7 @@ class Dao:
             'select * from ground_view_reservationplan WHERE ymd_range = %s and user_id = %s',
             [str_ymd, user_id])
         data = self.cur.fetchone()
-        return Plan(self, data)
+        return Plan(self, data) if data is not None else None
 
     @transaction
     def get_targets_from_plan_id(self, plan_id):
