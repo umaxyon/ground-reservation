@@ -8,7 +8,7 @@ import AddCircleOutlineIcon from '@material-ui/icons/AddCircleOutline';
 import DirectionsWalkIcon from '@material-ui/icons/DirectionsWalk';
 import { useHistory } from 'react-router-dom';
 import { SUB_DOMAIN } from '../modules/Constants';
-import { changeNavi } from '../modules/PlanListSlice';
+import { changeNavi, initPlan } from '../modules/PlanListSlice';
 import { ConfirmDialog } from './Dialogs';
 import { logoutConfirm, logout } from '../modules/AuthSlice';
 
@@ -49,6 +49,11 @@ const BottomNavi: React.FC<any> = () => {
         }
     }
     
+    const handleCreatePlan = () => {
+        if (isLoggedIn) {
+            push(`/${SUB_DOMAIN}/add_plan`)
+        }
+    }
 
     return (
         <>
@@ -62,7 +67,7 @@ const BottomNavi: React.FC<any> = () => {
                 label="プラン作成" 
                 disabled={!isLoggedIn}
                 value="add_plan" icon={<AddCircleOutlineIcon />} 
-                onClick={() => { if (isLoggedIn) push(`/${SUB_DOMAIN}/add_plan`) }} />
+                onClick={handleCreatePlan} />
             <BottomNavigationAction
                 label="設定"
                 disabled={!isLoggedIn}

@@ -31,7 +31,7 @@ import {
     planDateInit,
     changePickerDateConfirm,
     firstEnd} from '../modules/PlanListSlice';
-import { SUB_DOMAIN } from '../modules/Constants';
+import { SUB_DOMAIN, AREAS } from '../modules/Constants';
 import { MaterialUiPickersDate } from '@material-ui/pickers/typings/date';
 import { DatePicker } from '@material-ui/pickers';
 import addDays from 'date-fns/addDays';
@@ -131,7 +131,7 @@ const AddPlan: React.FC<any> = (props) => {
     const handleClickOpen = () => {
         dispatch(changePickerDate({date: pickerDate }));
         if (existsTarget === 'add') {
-            dispatch(initNewTarget({areas: ['大田ST', '糀谷・羽田', '蒲田', '調布'], date: pickerDate, pickerMonth}));
+            dispatch(initNewTarget({areas: AREAS, date: pickerDate, pickerMonth}));
         } else {
             dispatch(openEditTarget(pickerDate));
         }

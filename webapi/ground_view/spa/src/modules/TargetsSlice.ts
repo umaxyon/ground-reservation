@@ -10,6 +10,9 @@ import {
 import {
     planDateInit
 } from "./PlanListSlice";
+import addDays from 'date-fns/addDays';
+import format from 'date-fns/format';
+import parse from 'date-fns/parse';
 
 export interface ITimes {
     [key: string]: {
@@ -204,10 +207,11 @@ const TargetsSlice = createSlice({
     reducers: {
         initNewTarget: (state, action) => {
             const areas: string[] = action.payload.areas;
-            const pickerMonth: number = action.payload.pickerMonth;
+            const dt = action.payload.date || format(addDays(new Date(), 3), 'yyyyMMdd')
+            const pickerMonth: number = action.payload.pickerMonth || parse(dt, 'yyyyMMdd', dt).getMonth() + 1;
             state.condition.areas = areas;
             setDefaultCondition(state, areas, pickerMonth);
-            state.condition.date = action.payload.date;
+            state.condition.date = dt;
             state.condition.total = countGoumens(state.condition);
             state.mode = 'add';
             state.preEditDate = '';

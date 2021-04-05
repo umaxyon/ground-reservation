@@ -1,12 +1,15 @@
 import React, { useEffect } from 'react';
 import { useHistory } from 'react-router-dom';
 import { useAppDispatch, useAppSelector } from '../hooks';
-import { makeStyles, createStyles, Theme } from '@material-ui/core/styles';
+import { makeStyles, createStyles, Theme, withStyles } from '@material-ui/core/styles';
 import { createMuiTheme, ThemeProvider } from '@material-ui/core/styles';
 import { green } from '@material-ui/core/colors';
 import EditIcon from '@material-ui/icons/Edit';
 import DeleteForeverIcon from '@material-ui/icons/DeleteForever';
-import { Grid, Paper, Button,  Typography, Badge, Switch, FormControlLabel } from '@material-ui/core';
+import {
+    Grid, Paper, Button,  Typography, Badge, Switch, FormControlLabel, 
+    Table, TableBody, TableCell, TableContainer, TableHead, TableRow
+} from '@material-ui/core';
 import { 
     loadPlanById,
     submitWatchChange,
@@ -15,9 +18,9 @@ import {
     openDeleteConfirm,
     closeDeleteConfirm,
     deletePlan } from '../modules/PlanListSlice';
-import { loadTargetsFromDate } from '../modules/TargetsSlice'; 
+import { loadTargetsFromDate, initNewTarget } from '../modules/TargetsSlice'; 
 import { useParams } from 'react-router-dom';
-import { SUB_DOMAIN } from '../modules/Constants';
+import { SUB_DOMAIN, AREAS } from '../modules/Constants';
 import { ConfirmDialog } from './Dialogs';
 import { Plan } from './PlanRow';
 
@@ -61,6 +64,18 @@ const useStyles = makeStyles((theme: Theme) =>
     }),
 );
 
+const StyledTableCell = withStyles((theme: Theme) =>
+  createStyles({
+    head: {
+      backgroundColor: theme.palette.common.black,
+      color: theme.palette.common.white,
+    },
+    body: {
+      fontSize: 14,
+    },
+  }),
+)(TableCell);
+
 const PlanDetail: React.FC<any> = (props) => {
     const dispatch = useAppDispatch();
     const history = useHistory();
@@ -102,6 +117,7 @@ const PlanDetail: React.FC<any> = (props) => {
 
     const handleDeleteConfirm = (yesNo: string) => () => {
         if (yesNo === 'delete') {
+            dispatch(initNewTarget({areas: AREAS}));
             dispatch(deletePlan(dtl.dat.ymd_range));
         } else {
             dispatch(closeDeleteConfirm({}));
@@ -110,20 +126,13 @@ const PlanDetail: React.FC<any> = (props) => {
 
     const reserveDetail = dtl.reservedData().map((r, i) => {
         return (
-            <Grid item={true} container={true} spacing={2} key={`reserveDat_${r.area}_${r.timebox}_${i}`}>
-                <Grid item={true}>
-                    {r.area}
-                </Grid>
-                <Grid item={true}>
-                    {r.timebox || ""}
-                </Grid>
-                <Grid item={true}>
-                    {r.stadium || '未'} {r.gno || ""}
-                </Grid>
-                <Grid item={true}>
-                    {r.reserve_no || ""}
-                </Grid>
-            </Grid>
+            <TableRow key={`reserveDat_${r.area}_${r.timebox}_${i}`}>
+                <TableCell component="th" scope="row">{r.area}</TableCell>
+                <TableCell>{r.timebox || ""}</TableCell>
+                <TableCell>{r.stadium || "未"}</TableCell>
+                <TableCell>{r.gno || ""}</TableCell>
+                <TableCell>{r.reserve_no || ""}</TableCell>
+            </TableRow>
         )
     })
 
@@ -169,14 +178,29 @@ const PlanDetail: React.FC<any> = (props) => {
                         </Button>
                     </Grid>
                 </Grid>
-                <Grid item={true}>
-                    <hr />
+                <Grid item={true} style={{ width: '100%' }}>
+                    <hr className={css.hrMargin} />
                 </Grid>
                 <Grid item={true}>
                     <Typography variant="subtitle1">予約状況 </Typography>
                 </Grid>
                 <Grid item={true} container={true}>
-                    {reserveDetail}
+                    <TableContainer component={Paper}>
+                        <Table size="small" aria-label="a dense table">
+                            <TableHead>
+                                <TableRow>
+                                    <StyledTableCell>エリア</StyledTableCell>
+                                    <StyledTableCell>時間帯</StyledTableCell>
+                                    <StyledTableCell>球場</StyledTableCell>
+                                    <StyledTableCell>号面</StyledTableCell>
+                                    <StyledTableCell>予約番号</StyledTableCell>
+                                </TableRow>
+                            </TableHead>
+                            <TableBody>
+                                {reserveDetail}
+                            </TableBody>
+                        </Table>
+                    </TableContainer>
                 </Grid>
             </Grid>
             <ConfirmDialog

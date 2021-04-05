@@ -174,6 +174,9 @@ const PlanListSlice = createSlice({
     name: "PlanList",
     initialState,
     reducers: {
+        initPlan: (state, action) => {
+            state = initialState;
+        },
         changeNavi: (state, action) => {
             state.navi = action.payload;
             state.addPlanResp = false;
@@ -269,6 +272,7 @@ const PlanListSlice = createSlice({
 });
 
 export const {
+    initPlan,
     changeNavi,
     changePickerDate,
     planDateInit,
