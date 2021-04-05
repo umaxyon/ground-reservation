@@ -131,7 +131,7 @@ const AddPlan: React.FC<any> = (props) => {
     const handleClickOpen = () => {
         dispatch(changePickerDate({date: pickerDate }));
         if (existsTarget === 'add') {
-            dispatch(initNewTarget({areas: ['蒲田'], date: pickerDate, pickerMonth}));
+            dispatch(initNewTarget({areas: ['大田ST', '糀谷・羽田', '蒲田', '調布'], date: pickerDate, pickerMonth}));
         } else {
             dispatch(openEditTarget(pickerDate));
         }
