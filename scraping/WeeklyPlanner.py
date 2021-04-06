@@ -51,7 +51,7 @@ class WeeklyPlanner:
                 if old_plan is not None:
                     continue
                 week = DayOfWeek.from_date(Du.from_str(day)).value
-                holder = PlanTargetHolder(self.target_tmplates[str(week)], PlanStatus.of('false'), day)
+                holder = PlanTargetHolder(self.target_tmplates[str(week)], PlanStatus.of('true'), day)
                 holder.create(self.dao, day, user_id)
 
             self.log.debug(f'create_plan. target_days={target_days}')

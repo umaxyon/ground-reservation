@@ -43,7 +43,7 @@ async def process():
         log.info(f'[{user[1]}]')
         await Reserver(log, dao, user[0], sc['account'], sc['pswd']).run()
 
-    # WeeklyPlanner(log, dao).run()
+    WeeklyPlanner(log, dao).run()
     PlanEraser(log, dao).run()
 
 
@@ -72,4 +72,4 @@ def schedule(interval, wait=True):
 
 
 if __name__ == "__main__":
-    schedule(4 * 60)
+    schedule(5 * 60)
