@@ -14,6 +14,7 @@ class WeeklyPlanner:
         self.target_tmplates = {}
 
     def get_week_target(self, user_id):
+        self.target_weekdays = []
         weekdays_csv = self.dao.get_week_targets(user_id)
         target_weekdays = DayOfWeek.from_csv(weekdays_csv)
         if target_weekdays is not None:
