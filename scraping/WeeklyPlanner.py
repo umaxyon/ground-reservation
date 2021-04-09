@@ -3,7 +3,7 @@ import json
 from ground_view.batch.Share import DateTimeUtil as Du
 from ground_view.batch.Share import DayOfWeek
 from ground_view.batch.Share import PlanTargetHolder, PlanStatus
-from Dao import Dao
+from scraping.Dao import Dao
 
 
 class WeeklyPlanner:

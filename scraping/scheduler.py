@@ -6,10 +6,10 @@ from pathlib import Path
 import logging
 from logging import StreamHandler
 from logging.handlers import RotatingFileHandler
-from Reserver import Reserver
-from Dao import Dao
-from WeeklyPlanner import WeeklyPlanner
-from PlanEraser import PlanEraser
+from scraping.Reserver import Reserver
+from scraping.Dao import Dao
+from scraping.WeeklyPlanner import WeeklyPlanner
+from scraping.PlanEraser import PlanEraser
 
 
 def now():

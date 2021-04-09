@@ -1,8 +1,10 @@
 import itertools
-from ReservationCalender import ReservationCalender
-from Scraper import Scraper
-from GrandInfo import GrandInfo, get_goumen_num
-from ground_view.batch.Share import CalDay, Stadium, TimeboxResolver, Area
+from typing import List
+
+from scraping.ReservationCalender import ReservationCalender
+from scraping.Scraper import Scraper
+from scraping.GrandInfo import GrandInfo, get_goumen_num
+from ground_view.batch.Share import CalDay, Stadium, TimeboxResolver, Area, Target, DateTimeUtil as Du
 
 
 class TargetGroupIterator:
@@ -46,7 +48,7 @@ class Reserver:
 
         self.user_id = user_id
         self.plans = []
-        self.targets = []
+        self.targets: List[Target] = []
 
     def initialize_plan(self):
         self.plans = self.dao.get_available_plans(self.user_id)
@@ -105,17 +107,17 @@ class Reserver:
                     clicked_list.append(clicked_tpl)
                     break  # この時間帯で1個押せたら次の時間帯へ。(球場もまたいで1個。ex: 多摩川、六郷橋。。セット内で1個。)
 
-        # # 全ての「エリア、時間帯枠」で予約有が存在する場合、プランを確定とする
-        # if resoleved_cnt + len(clicked_list) == len(timebox_resolve_targets):
-        #     plan_id = timebox_resolve_targets[0][1][0].plan_id   # 日付で絞れている時点でplan_idは一意に確定している
-        #     self.dao.determined_plan(plan_id)
-        #     self.log.debug('プラン確定')
-
         if len(clicked_list) > 0:
             self.log.debug(f"[{ym}{dt}] 選択: {[f'{t[0]}_{t[1]}(tm={t[2]})' for t in clicked_list]}")
             return await self.commit_reserve(info)
 
         return []
+
+    @staticmethod
+    def check_time_before_18_00(ymd: str):
+        # targetが現在の3日後(つまりキャンセル可能な最終日)の場合、18時まではTrue、18時以降はFalseを返す
+        last_ymd = Du.add_day_str(Du.str_today(), 3)
+        return not (ymd < last_ymd or ymd == last_ymd and Du.now_hour() >= 18)
 
     async def run(self):
         self.initialize_plan()  # 有効なプラン取得
@@ -142,6 +144,9 @@ class Reserver:
 
                 # 日付で絞る
                 for dt, t_grp_dt in TargetGroupIterator(t_grp_ym, 'dt'):
+                    if not self.check_time_before_18_00(f"{str(ym)}{dt:0>2}"):
+                        continue  # 直前日の18時以降は予約しない
+
                     if cal.is_open_day(ym, dt):
                         self.log.debug(f"[{area}] {str(ym)[0:4]}年{str(ym)[4:6]}月{dt:0>2}日 open try.")
 

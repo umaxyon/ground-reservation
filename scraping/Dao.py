@@ -3,7 +3,7 @@ import os
 import MySQLdb
 from sqlalchemy.pool import QueuePool
 from ground_view.batch.Share import Plan, Target
-
+from typing import List
 
 def jst_now():
     return datetime.datetime.utcnow() + datetime.timedelta(hours=9)
@@ -78,7 +78,7 @@ class Dao:
         return Plan(self, data) if data is not None else None
 
     @transaction
-    def get_targets_from_plan_id(self, plan_id):
+    def get_targets_from_plan_id(self, plan_id) -> List[Target]:
         self.cur.execute('select * from ground_view_reservationtarget WHERE plan_id = %s', [plan_id])
         data = self.cur.fetchall()
         return [Target(self, d) for d in data]
