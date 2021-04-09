@@ -42,10 +42,10 @@ timebox_table = {
     # '平和島公園': {0: time_ptn[1], 1: time_ptn[4]},
     '大田ｽﾀｼﾞｱﾑ': {0: time_ptn[2], 1: time_ptn[2]},
     '東調布公園': {0: time_ptn[3], 1: time_ptn[5]},
-    '多摩川緑地': {0: time_ptn[1], 1: time_ptn[4]},
-    '六郷橋緑地': {0: time_ptn[1], 1: time_ptn[4]},
-    '大師橋緑地': {0: time_ptn[1], 1: time_ptn[4]},
-    'ｶﾞｽ橋緑地': {0: time_ptn[1], 1: time_ptn[4]},
+    '多摩川緑地': {0: time_ptn[1], 1: time_ptn[4], 2: time_ptn[1]},
+    '六郷橋緑地': {0: time_ptn[1], 1: time_ptn[4], 2: time_ptn[1]},
+    # '大師橋緑地': {0: time_ptn[1], 1: time_ptn[4]},
+    'ｶﾞｽ橋緑地': {0: time_ptn[1], 1: time_ptn[4], 2: time_ptn[1]},
     '萩中公園': {0: time_ptn[3], 1: time_ptn[2]}
 }
 
@@ -55,8 +55,19 @@ class TimeboxResolver:
         self.stadium = stadium
 
     def get(self, month):
-        # TODO 4月からいつまで同じ日付パターンなのか不明。
-        time_idx = 0 if month <= 3 else 1
+        if self.stadium in Area.KAMATA.stadiums:
+            if month <= 3 or month >= 11:
+                time_idx = 0
+            elif 4 <= month <= 8:
+                time_idx = 1
+            else:
+                time_idx = 2
+        else:
+            if month <= 3 or month == 12:
+                time_idx = 0
+            else:
+                time_idx = 1
+        # time_idx = 0 if month <= 3 else 1
         return timebox_table[self.stadium.nm][time_idx]
 
 
@@ -248,23 +259,6 @@ class ReservationModel:
         self.dao = dao
 
 
-class Plan(ReservationModel):
-    def __init__(self, dao, dat):
-        super().__init__(dao)
-        self.id = dat[0]
-        self.status = dat[1]
-        self.area_csv = dat[2]
-        self.ymd_range = dat[3]
-        self.targets_cnt = dat[4]
-        self.reserved_cnt = dat[5]
-        self.targets = []
-
-    def get_targets(self, force=False):
-        if len(self.targets) == 0 or force:
-            self.targets = self.dao.get_targets_from_plan_id(self.id)
-        return self.targets
-
-
 class Target(ReservationModel):
     KEYS = {
         'id': 0, 'status': 1, 'ym': 2, 'dt': 3, 'week_day': 4, 'area': 5,
@@ -295,6 +289,10 @@ class Target(ReservationModel):
         return int(str(self.ym)[4:])
 
     @property
+    def ymd(self):
+        return f"{self.ym}{self.dt}"
+
+    @property
     def calday(self):
         return CalDay(self.year, self.month, self.dt, False, None)
 
@@ -311,6 +309,23 @@ class Target(ReservationModel):
 
     def __getitem__(self, item):
         return self._dat[Target.KEYS[item]]
+
+
+class Plan(ReservationModel):
+    def __init__(self, dao, dat):
+        super().__init__(dao)
+        self.id = dat[0]
+        self.status = dat[1]
+        self.area_csv = dat[2]
+        self.ymd_range = dat[3]
+        self.targets_cnt = dat[4]
+        self.reserved_cnt = dat[5]
+        self.targets = []
+
+    def get_targets(self, force=False) -> List[Target]:
+        if len(self.targets) == 0 or force:
+            self.targets = self.dao.get_targets_from_plan_id(self.id)
+        return self.targets
 
 
 class DayOfWeek(Enum):
@@ -365,6 +380,10 @@ class DayOfWeek(Enum):
 
 
 class DateTimeUtil(object):
+
+    @staticmethod
+    def now_hour() -> int:
+        return dt.datetime.now().hour
 
     @staticmethod
     def today():
